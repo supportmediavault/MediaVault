@@ -21,14 +21,13 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
-  // إعادة تعيين الموقع لمنتصف الشاشة تماماً عند فتح النافذة
   useEffect(() => {
     if (isOpen) {
       setPosition({ x: 0, y: 0 });
     }
   }, [isOpen]);
 
-  // دعم حركة السحب والتنقل لكل من الماوس واللمس (للهواتف والتابلت)
+  // إدارة حركة السحب مع منع التمرير الخلفي للشاشة أثناء اللمس
   useEffect(() => {
     const handleMove = (clientX: number, clientY: number) => {
       if (!isDragging) return;
@@ -39,8 +38,12 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
     };
 
     const handleMouseMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY);
+    
     const handleTouchMove = (e: TouchEvent) => {
+      if (!isDragging) return;
       if (e.touches.length > 0) {
+        // منع السلوك الافتراضي (مثل Scroll Down/Up للشاشة) أثناء سحب الصندوق
+        e.preventDefault();
         handleMove(e.touches[0].clientX, e.touches[0].clientY);
       }
     };
@@ -65,7 +68,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-xs pointer-events-none flex items-center justify-center p-3">
+    <div className="fixed inset-0 z-[99999] bg-black/50 backdrop-blur-sm pointer-events-none">
       <div
         style={{
           position: 'fixed',
@@ -91,62 +94,62 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
             setDragStart({ x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y });
           }
         }}
-        className={`pointer-events-auto shadow-2xl flex flex-col w-[88%] max-w-xs rounded-xl p-3 cursor-grab active:cursor-grabbing select-none transition-shadow ${
-          isDarkMode ? 'bg-slate-900 border border-slate-700 text-slate-100' : 'bg-white border border-slate-200 text-slate-800'
+        className={`pointer-events-auto shadow-2xl flex flex-col w-[75vw] max-w-[260px] rounded-xl p-2.5 cursor-grab active:cursor-grabbing select-none border transition-shadow touch-none ${
+          isDarkMode 
+            ? 'bg-slate-900/95 border-slate-700 text-slate-100' 
+            : 'bg-white/95 border-slate-200 text-slate-800'
         }`}
       >
-        {/* شريط العنوان وزر الإغلاق العلوي */}
-        <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-slate-700/25">
-          <h3 className="text-[11px] font-bold truncate max-w-[80%]" title={mediaName}>
+        {/* شريط العنوان */}
+        <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-500/20">
+          <h3 className="text-[10px] font-bold truncate max-w-[75%]" title={mediaName}>
             👁️ {mediaName}
           </h3>
-          
           <button
             onClick={onClose}
-            className="w-5 h-5 rounded-full flex items-center justify-center bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer text-[10px] font-bold"
+            className="w-5 h-5 rounded-full flex items-center justify-center bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer text-[10px] font-bold shrink-0"
             title="Close"
           >
             ✕
           </button>
         </div>
 
-        {/* محتوى المعاينة بحجم مصغر ومناسب جداً للشاشات الصغيرة */}
-        <div className="flex items-center justify-center bg-slate-950 rounded-lg p-1.5 overflow-hidden min-h-[120px] max-h-[25vh]">
+        {/* حاوية المحتوى */}
+        <div className="flex items-center justify-center bg-slate-950/90 rounded-lg p-1 overflow-hidden h-[110px]">
           {mediaType === 'image' && (
             <img 
               src={mediaUrl} 
               alt={mediaName} 
-              className="object-contain rounded-md shadow-sm max-h-[22vh]" 
+              className="object-contain max-h-[100px] w-auto rounded" 
             />
           )}
           {mediaType === 'audio' && (
-            <div className="w-full flex flex-col items-center space-y-1.5 py-2">
-              <span className="text-xl animate-pulse">🎵</span>
-              <audio src={mediaUrl} controls className="w-full scale-90 origin-center" />
+            <div className="w-full flex flex-col items-center justify-center space-y-1 py-1">
+              <span className="text-base animate-pulse">🎵</span>
+              <audio src={mediaUrl} controls className="w-full max-w-[190px] h-7 scale-90" />
             </div>
           )}
           {mediaType === 'video' && (
             <video 
               src={mediaUrl} 
               controls 
-              className="w-full rounded-md shadow-sm max-h-[22vh]" 
+              className="max-h-[100px] w-full object-contain rounded" 
             />
           )}
         </div>
 
-        {/* الأزرار بالأسفل موزعة على الأطراف */}
-        <div className="flex items-center justify-between pt-2.5 mt-auto">
+        {/* أزرار التحكم السفلى */}
+        <div className="flex items-center justify-between pt-2 mt-1.5">
           <a
             href={mediaUrl}
             download={mediaName}
-            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[11px] font-bold transition-colors shadow-sm flex items-center gap-1"
+            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-[10px] font-bold transition-colors shadow-xs flex items-center gap-1"
           >
             📥 Download
           </a>
-          
           <button
             onClick={onClose}
-            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-colors cursor-pointer ${
               isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
             }`}
           >
