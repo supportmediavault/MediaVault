@@ -2,5 +2,5 @@
 User-agent: *
 Allow: /
 
-# تحديد رابط موقعك الرسمي (استبدل example.com برابط موقعك الحقيقي لاحقاً)
-Sitemap: https://example.com/sitemap.xml
+# تحديد رابط خريطة الموقع الرسمية
+Sitemap: https://mediavault-live.vercel.app/sitemap.xml
