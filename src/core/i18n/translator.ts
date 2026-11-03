@@ -70,6 +70,8 @@ export const baseTranslations: Record<string, any> = {
     cookieTitle: "We Respect Your Privacy",
     cookieDesc: "We use cookies strictly to track visitor traffic and improve system performance. No personal data is stored.",
     cookieBtn: "Got it, thanks!",
+    qualityNoteTitle: "Note on Media Quality & Resolution",
+    qualityNoteDesc: "Raising video or image resolution beyond the original source does not create new pixels or improve native quality. Conversion optimizes format and compression efficiently without recovering lost details.",
     formatDescriptions: {
       webp: "Modern image format providing superior compression and quality for the Web.",
       png: "Lossless image format ideal for graphics and transparent backgrounds.",
@@ -160,6 +162,8 @@ export const baseTranslations: Record<string, any> = {
     cookieTitle: "نحترم خصوصيتك",
     cookieDesc: "نستخدم الكوكيز فقط لمعرفة أعداد الزوار وتطوير أداء المنصة لخدمتك بشكل أفضل. لا نجمع أي بيانات شخصية.",
     cookieBtn: "حسناً، فهمت!",
+    qualityNoteTitle: "ملاحظة هامة بخصوص جودة ودقة التحويل",
+    qualityNoteDesc: "علمياً ومنطقياً، رفع دقة الفيديو أو الصورة فوق المصدر الأصلي لا ينشئ بيكسلات جديدة أو يحسن الجودة الأساسية؛ عملية التحويل تنظم الصيغة والضغط بكفاءة دون استعادة التفاصيل المفقودة.",
     formatDescriptions: {
       webp: "صيغة صور حديثة توفر ضغطاً فائقاً وجودة عالية للويب.",
       png: "صيغة صور بدون فقدان بيانات مثالية للرسومات والخلفيات الشفافة.",
@@ -250,6 +254,8 @@ export const baseTranslations: Record<string, any> = {
     cookieTitle: "Nous respectons votre vie privée",
     cookieDesc: "Nous utilisons des cookies pour analyser le trafic et améliorer les performances.",
     cookieBtn: "J'ai compris !",
+    qualityNoteTitle: "Remarque sur la qualité et la résolution",
+    qualityNoteDesc: "Augmenter la résolution d'une vidéo ou d'une image au-delà de la source originale ne crée pas de nouveaux pixels et n'améliore pas la qualité native.",
     formatDescriptions: {
       webp: "Format d'image moderne offrant une compression et une qualité supérieures pour le Web.",
       png: "Format d'image sans perte idéal pour les graphiques et les fonds transparents.",
@@ -340,6 +346,8 @@ export const baseTranslations: Record<string, any> = {
     cookieTitle: "Respetamos tu privacidad",
     cookieDesc: "Utilizamos cookies estrictamente para rastrear el tráfico de visitantes.",
     cookieBtn: "¡Entendido!",
+    qualityNoteTitle: "Nota sobre la calidad y resolución",
+    qualityNoteDesc: "Aumentar la resolución de un video o imagen más allá de la fuente original no crea nuevos píxeles ni mejora la calidad nativa.",
     formatDescriptions: {
       webp: "Formato de imagen moderno que ofrece compresión y calidad superiores para la Web.",
       png: "Formato de imagen sin pérdida ideal para gráficos y fondos transparentes.",
@@ -366,7 +374,7 @@ export const baseTranslations: Record<string, any> = {
       ts: "Formato de flujo de transporte MPEG utilizado para transmisión."
     },
     features: [
-      { badge: 'DISPONIBLE SIN CONEXIÓN', title: 'Funciona sin conexión a Internet', desc: 'Disfrute de capacidad independiente real. Transforme archivos sin problemas.' },
+      { badge: 'DISPONIBLE SIN CONEXIÓN', title: 'Funciona sin conexión a Internet', desc: 'Disfrute de verdadera capacidad independiente. Transforme archivos sin problemas.' },
       { badge: 'ALTO RENDIMIENTO', title: 'Procesamiento masivo de más de 500 archivos', desc: 'Convierta y procese cientos de archivos simultáneamente con un solo clic.' },
       { badge: '100% SEGURO', title: 'Privacidad absoluta de datos', desc: 'Todos los procesos de conversión ocurren enteramente del lado del cliente.' },
       { badge: 'SALIDA FLEXIBLE', title: 'Descargas ZIP y separadas', desc: 'Disfrute de la libertad de descargar todos sus archivos convertidos en un ZIP.' }
@@ -377,7 +385,7 @@ export const baseTranslations: Record<string, any> = {
     mainHeading: "Die ultimative Medienkonvertierungs-Engine",
     mainDesc: "Blitzschnelle Verarbeitung direkt in Ihrem Browser bei absoluter Datensicherheit.",
     tabs: { image: "Bilder", audio: "Audio", video: "Video" },
-    dropzoneTitle: "Dateien hierher ziehen oder zum Durchsuchen klicken",
+    dropzoneTitle: "Dateien hierher ziehen أو zum Durchsuchen klicken",
     dropzoneSubtitle: "Unterstützt nur korrekte Formate",
     selectedFiles: "Ausgewählte Dateien",
     clearList: "Liste leeren",
@@ -430,6 +438,8 @@ export const baseTranslations: Record<string, any> = {
     cookieTitle: "Wir respektieren Ihre Privatsphäre",
     cookieDesc: "Wir verwenden Cookies ausschließlich zur Analyse des Besucherverkehrs.",
     cookieBtn: "Verstanden!",
+    qualityNoteTitle: "Hinweis zu Qualität und Auflösung",
+    qualityNoteDesc: "Das Erhöhen der Auflösung über die Originalquelle hinaus erzeugt keine neuen Pixel und verbessert nicht die native Qualität.",
     formatDescriptions: {
       webp: "Modernes Bildformat mit hervorragender Komprimierung und Qualität für das Web.",
       png: "Verlustfreies Bildformat, ideal für Grafiken und transparente Hintergründe.",
@@ -520,6 +530,8 @@ export const baseTranslations: Record<string, any> = {
     cookieTitle: "我们尊重您的隐私",
     cookieDesc: "我们严格使用 Cookie 来跟踪访客流量。",
     cookieBtn: "知道了！",
+    qualityNoteTitle: "关于媒体质量与分辨率的说明",
+    qualityNoteDesc: "将视频或图像分辨率提高到超过原始源并不会产生新像素或提高本地质量。转换可以有效地优化格式和压缩，而不会恢复丢失的细节。",
     formatDescriptions: {
       webp: "现代图像格式，为网络提供卓越的压缩和质量。",
       png: "无损图像格式，非常适合图形和透明背景。",
@@ -610,6 +622,8 @@ export const baseTranslations: Record<string, any> = {
     cookieTitle: "プライバシーを尊重します",
     cookieDesc: "訪問者のトラフィックを追跡するためにCookieを使用します。",
     cookieBtn: "了解しました",
+    qualityNoteTitle: "画質と解像度に関する注意",
+    qualityNoteDesc: "元ソースを超えて解像度を引き上げても、新しいピクセルが作成されたり元の画質が向上したりすることはありません。",
     formatDescriptions: {
       webp: "Web用に優れた圧縮と品質を提供する現代の画像形式。",
       png: "グラフィックスや透明な背景に最適なロスレス画像形式。",
@@ -700,6 +714,8 @@ export const baseTranslations: Record<string, any> = {
     cookieTitle: "हम आपकी गोपनीयता का सम्मान करते हैं",
     cookieDesc: "हम आगंतुक ट्रैफ़िक को ट्रैक करने के लिए कुकीज़ का उपयोग करते हैं।",
     cookieBtn: "समझ गए!",
+    qualityNoteTitle: "गुणवत्ता और रिज़ॉल्यूशन पर नोट",
+    qualityNoteDesc: "मूल स्रोत से परे वीडियो या छवि रिज़ॉल्यूशन बढ़ाने से नए पिक्सेल नहीं बनते हैं और न ही मूल गुणवत्ता में सुधार होता है।",
     formatDescriptions: {
       webp: "आधुनिक छवि प्रारूप जो वेब के लिए बेहतर संपीड़न और गुणवत्ता प्रदान करता है।",
       png: "ग्राफिक्स और पारदर्शी पृष्ठभूमि के लिए आदर्श दोषरहित छवि प्रारूप।",
@@ -790,6 +806,8 @@ export const baseTranslations: Record<string, any> = {
     cookieTitle: "Respeitamos a sua privacidade",
     cookieDesc: "Usamos cookies estritamente para rastrear o tráfego de visitantes.",
     cookieBtn: "Entendido!",
+    qualityNoteTitle: "Nota sobre qualidade e resolução",
+    qualityNoteDesc: "Aumentar a resolução de um vídeo ou imagem além da fonte original não cria novos pixels nem melhora a qualidade nativa.",
     formatDescriptions: {
       webp: "Formato de imagem moderno que oferece compressão e qualidade superiores para a Web.",
       png: "Formato de imagem sem perdas ideal para gráficos e fundos transparentes.",
@@ -818,7 +836,7 @@ export const baseTranslations: Record<string, any> = {
     features: [
       { badge: 'OFFLINE ATIVADO', title: 'Funciona sem conexão com a Internet', desc: 'Desfrute de verdadeira capacidade independente. Transforme arquivos sem problemas.' },
       { badge: 'ALTO DESEMPENHO', title: 'Processamento em massa de 500+ arquivos', desc: 'Converta e processe centenas de arquivos e imagens simultaneamente.' },
-      { badge: '100% SEGURO', title: 'Privacidad absoluta de dados', desc: 'Todos os processos de conversão ocorrem inteiramente do lado do cliente.' },
+      { badge: '100% SEGURO', title: 'Privacidade absoluta de dados', desc: 'Todos os processos de conversão ocorrem inteiramente do lado do cliente.' },
       { badge: 'SAÍDA FLEXÍVEL', title: 'Downloads ZIP e Separados', desc: 'Desfrute da liberdade de baixar todos os arquivos convertidos em um ZIP.' }
     ]
   },
@@ -880,6 +898,8 @@ export const baseTranslations: Record<string, any> = {
     cookieTitle: "Мы уважаем вашу конфиденциальность",
     cookieDesc: "Мы используем файлы cookie исключительно для отслеживания трафика.",
     cookieBtn: "Понятно!",
+    qualityNoteTitle: "Примечание о качестве и разрешении",
+    qualityNoteDesc: "Увеличение разрешения видео или изображения выше исходного источника не создает новые пиксели и не улучшает нативное качество.",
     formatDescriptions: {
       webp: "Современный формат изображений с превосходным сжатием и качеством для веб.",
       png: "Формат без потерь, идеальный для графики и прозрачных фонов.",

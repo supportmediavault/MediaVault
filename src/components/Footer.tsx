@@ -34,9 +34,8 @@ export const Footer: React.FC<FooterProps> = ({
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [showThankYou, setShowThankYou] = useState(false);
 
-  // استرجاع التقييم المحفوظ مسبقاً من المتصفح عند فتح الصفحة
   useEffect(() => {
-    const savedRating = localStorage.getItem('mv_user_rating');
+    const savedRating = localStorage.getItem('imedia_user_rating');
     if (savedRating) {
       const parsed = parseInt(savedRating, 10);
       setUserRating(parsed);
@@ -45,15 +44,13 @@ export const Footer: React.FC<FooterProps> = ({
   }, [setUserRating, setRatingSubmitted]);
 
   const handleRate = (star: number) => {
-    // إذا قام بالتقييم من قبل، نمنع إعادة التقييم لتجنب التلاعب
     if (ratingSubmitted) return;
 
     setUserRating(star);
     setRatingSubmitted(true);
     setTotalVotes((prev) => prev + 1);
     
-    // حفظ التقييم في ذاكرة المتصفح المحلية
-    localStorage.setItem('mv_user_rating', star.toString());
+    localStorage.setItem('imedia_user_rating', star.toString());
 
     setShowThankYou(true);
     setTimeout(() => {
@@ -81,7 +78,6 @@ export const Footer: React.FC<FooterProps> = ({
           : 'bg-white/90 border-sky-100 text-slate-900 font-bold'
       }`}
     >
-      {/* قسم التقييم */}
       <div className="flex items-center gap-3">
         <span className={isDarkMode ? 'text-slate-100 font-bold' : 'text-slate-900 font-black'}>
           {ratingSubmitted ? (isRtl ? 'شكراً لتقييمك!' : 'Thank you for rating!') : (t.ratingTitle || 'Rate overall quality:')}
@@ -119,17 +115,15 @@ export const Footer: React.FC<FooterProps> = ({
         )}
       </div>
 
-      {/* حقوق الملكية */}
       <div className="flex items-center gap-2" dir="ltr">
         <span className={`font-black ${isDarkMode ? 'text-white' : 'text-slate-950'}`}>
-          MediaVault
+          iMedia
         </span>
         <span className={isDarkMode ? 'text-slate-300 font-semibold' : 'text-slate-800 font-bold'}>
           © 2026 - Privacy First
         </span>
       </div>
 
-      {/* أزرار الفوتر مع سهم الصعود للأعلى بجوار Donate */}
       <div className="flex items-center gap-3 flex-wrap justify-center">
         <button
           onClick={onOpenTerms}
@@ -159,7 +153,7 @@ export const Footer: React.FC<FooterProps> = ({
         </button>
 
         <a
-          href="https://ko-fi.com/mediavaultdono"
+          href="https://ko-fi.com/imediadono"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-md hover:scale-105 transition-all text-xs"
@@ -168,7 +162,6 @@ export const Footer: React.FC<FooterProps> = ({
           <span>{t.donate || 'Donate'}</span>
         </a>
 
-        {/* سهم الصعود إلى أعلى الصفحة */}
         <button
           onClick={scrollToTop}
           title={isRtl ? 'العودة للأعلى' : 'Scroll to top'}

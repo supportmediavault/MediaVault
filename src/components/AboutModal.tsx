@@ -68,12 +68,12 @@ export const AboutModal: React.FC<AboutModalProps> = ({
       <div className="py-3 space-y-3 text-xs leading-relaxed">
         <div className={`p-3.5 rounded-xl border space-y-2 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
           <h4 className="font-semibold text-sky-600 dark:text-sky-400 text-xs">
-            {isRtl ? 'عن منصة MediaVault' : 'About MediaVault'}
+            {isRtl ? 'عن منصة iMedia' : 'About iMedia'}
           </h4>
           <p className="opacity-90 leading-relaxed">
             {isRtl 
               ? 'نحن منصة متكاملة لتحويل ومعالجة الوسائط مباشرة عبر متصفحك. هدفنا توفير وسيلة سريعة وآمنة لتحويل ملفات الصور، الصوت، والفيديو مع ضمان الخصوصية الكاملة لمعالجة الملفات على جهازك الشخصي.'
-              : 'MediaVault is your ultimate browser-based media conversion engine, designed to provide a fast, secure, and seamless way to convert files directly on your device with absolute privacy.'}
+              : 'iMedia is your ultimate browser-based media conversion engine, designed to provide a fast, secure, and seamless way to convert files directly on your device with absolute privacy.'}
           </p>
         </div>
 

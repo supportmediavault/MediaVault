@@ -19,7 +19,7 @@ import { PreviewModal } from '@/src/components/PreviewModal';
 
 type TabType = 'image' | 'audio' | 'video';
 
-export default function MediaVaultApp() {
+export default function IMediaApp() {
   const [lang, setLang] = useState<string>('en');
   const isRtl = lang === 'ar';
   
@@ -58,7 +58,7 @@ export default function MediaVaultApp() {
   }, []);
 
   useEffect(() => {
-    document.title = t.mainHeading || 'MediaVault - Local Media Converter';
+    document.title = t.mainHeading || 'iMedia - Local Media Converter';
     let metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) {
       metaDesc = document.createElement('meta');
@@ -79,20 +79,20 @@ export default function MediaVaultApp() {
   }, []);
 
   useEffect(() => {
-    const savedFormat = localStorage.getItem(`mv_pref_format_${activeTab}`);
-    const savedComp = localStorage.getItem('mv_pref_compression');
+    const savedFormat = localStorage.getItem(`imedia_pref_format_${activeTab}`);
+    const savedComp = localStorage.getItem('imedia_pref_compression');
     if (savedFormat) setTargetFormat(savedFormat);
     if (savedComp) setCompressionLevel(savedComp);
   }, [activeTab]);
 
   const handleFormatChange = (fmt: string) => {
     setTargetFormat(fmt);
-    localStorage.setItem(`mv_pref_format_${activeTab}`, fmt);
+    localStorage.setItem(`imedia_pref_format_${activeTab}`, fmt);
   };
 
   const handleCompressionChange = (comp: string) => {
     setCompressionLevel(comp);
-    localStorage.setItem('mv_pref_compression', comp);
+    localStorage.setItem('imedia_pref_compression', comp);
   };
 
   const showToast = (msg: string) => {
@@ -108,7 +108,7 @@ export default function MediaVaultApp() {
       if (newCompleted > prevCompleted) {
         showToast(isRtl ? '✨ تم اكتمال تحويل ملف بنجاح!' : '✨ File conversion completed successfully!');
         if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-          new Notification('MediaVault', { body: isRtl ? 'تم الانتهاء من معالجة ملف بنجاح' : 'A file has been successfully converted!' });
+          new Notification('iMedia', { body: isRtl ? 'تم الانتهاء من معالجة ملف بنجاح' : 'A file has been successfully converted!' });
         }
       }
 
@@ -131,7 +131,7 @@ export default function MediaVaultApp() {
 
   useEffect(() => {
     const defaultFormat = activeTab === 'image' ? 'webp' : activeTab === 'audio' ? 'mp3' : 'mp4';
-    const saved = localStorage.getItem(`mv_pref_format_${activeTab}`);
+    const saved = localStorage.getItem(`imedia_pref_format_${activeTab}`);
     setTargetFormat(saved || defaultFormat);
     setTypeError(null);
   }, [activeTab]);
@@ -168,7 +168,6 @@ export default function MediaVaultApp() {
     queueManager.start(activeTab, targetFormat, options);
   };
 
-  // فلترة الملفات بناءً على القسم (Tab) النشط حالياً لكي لا تظهر ملفات الأقسام الأخرى معاً
   const filteredFileList = fileList.filter((item) => {
     const isImg = item.file.type.startsWith('image/');
     const isAud = item.file.type.startsWith('audio/');
@@ -384,7 +383,6 @@ export default function MediaVaultApp() {
                     </button>
                   )}
                   <button onClick={() => {
-                    // مسح ملفات القسم الحالي فقط بدلاً من الكل
                     filteredFileList.forEach(item => queueManager.removeFile(item.id));
                   }} className="text-rose-500 hover:underline cursor-pointer">
                     {t.clearList}
@@ -462,7 +460,6 @@ export default function MediaVaultApp() {
                       )}
                       {item.status === 'completed' && item.downloadUrl && (
                         <div className="flex items-center gap-1.5">
-                          {/* زر المعاينة الفورية */}
                           <button
                             onClick={() => setPreviewItem({ url: item.downloadUrl!, name: `${item.customName}.${targetFormat}`, type: activeTab })}
                             className="px-2.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
@@ -471,7 +468,6 @@ export default function MediaVaultApp() {
                             👁️ {isRtl ? 'معاينة' : 'Preview'}
                           </button>
 
-                          {/* زر التحميل المباشر */}
                           <a
                             href={item.downloadUrl}
                             download={`${item.customName}.${targetFormat}`}

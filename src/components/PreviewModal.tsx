@@ -21,14 +21,12 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
-  // إعادة تعيين الموقع للوسط عند فتح النافذة
   useEffect(() => {
     if (isOpen) {
       setPosition({ x: 0, y: 0 });
     }
   }, [isOpen]);
 
-  // تتبع حركة السحب بسلاسة تامة للماوس واللمس مع منع سكرول الخلفية
   useEffect(() => {
     const handleMove = (clientX: number, clientY: number) => {
       if (!isDragging) return;
@@ -98,7 +96,6 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
           isDarkMode ? 'bg-slate-900 border border-slate-700 text-slate-100' : 'bg-white border border-slate-200 text-slate-800'
         }`}
       >
-        {/* شريط العنوان وزر الإغلاق العلوي */}
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-700/25">
           <h3 className="text-xs font-bold truncate max-w-[80%]" title={mediaName}>
             👁️ {mediaName}
@@ -113,7 +110,6 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
           </button>
         </div>
 
-        {/* محتوى المعاينة بالحجم المصغر */}
         <div className="flex items-center justify-center bg-slate-950 rounded-xl p-2 overflow-hidden min-h-[110px] max-h-[30vh]">
           {mediaType === 'image' && (
             <img 
@@ -137,7 +133,6 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
           )}
         </div>
 
-        {/* الأزرار بالأسفل موزعة على الأطراف */}
         <div className="flex items-center justify-between pt-3 mt-auto">
           <a
             href={mediaUrl}

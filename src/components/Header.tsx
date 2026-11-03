@@ -69,7 +69,6 @@ export const Header: React.FC<HeaderProps> = ({
     >
       <div className="w-full px-6 flex items-center justify-between">
         
-        {/* اللوجو مع تحديث الصفحة عند النقر لإعادة تعيين الحالة */}
         <div 
           onClick={() => window.location.reload()}
           className="flex items-center gap-3.5 group cursor-pointer"
@@ -81,7 +80,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div className="flex flex-col">
             <span className={`text-2xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-              Media<span className="text-sky-500">Vault</span>
+              i<span className="text-sky-500">Media</span>
             </span>
             <span className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase opacity-80">
               {t.privacySub || '100% Client-Side Privacy'}
@@ -89,7 +88,6 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* عناصر التحكم */}
         <div className="flex items-center gap-3" dir="ltr">
           <div className="relative">
             <button
@@ -141,7 +139,7 @@ export const Header: React.FC<HeaderProps> = ({
                         paddingLeft: isHovered ? '20px' : '16px',
                         transition: 'all 0.15s ease-in-out',
                       }}
-                      className={`w-full text-left px-4 py-3 text-xs font-bold flex items-center justify-between cursor-pointer`}
+                      className={`w-full text-left px-4 py-3 text-xs font-bold flex items-center justify-center cursor-pointer`}
                     >
                       <span>{l.name}</span>
                       {isSelected && <span>✓</span>}

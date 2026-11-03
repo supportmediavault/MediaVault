@@ -4,8 +4,8 @@
   "display": "standalone",
   "scope": "/",
   "start_url": "/",
-  "name": "MediaVault - Client-Side Media Converter",
-  "short_name": "MediaVault",
+  "name": "iMedia - Client-Side Media Converter",
+  "short_name": "iMedia",
   "description": "Convert images, audio, and video directly in your browser with 100% privacy.",
   "icons": [
     {

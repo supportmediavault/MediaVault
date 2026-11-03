@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { Analytics } from '@vercel/analytics/react';
 
 export const metadata: Metadata = {
-  title: 'MediaVault | 100% Client-Side Media Converter',
+  title: 'iMedia | 100% Client-Side Media Converter',
   description: 'Convert images, audio, and video files directly in your browser with absolute privacy guaranteed.',
   manifest: '/manifest.json',
 };
@@ -16,7 +16,7 @@ export default function RootLayout({
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    'name': 'MediaVault',
+    'name': 'iMedia',
     'operatingSystem': 'All',
     'applicationCategory': 'MultimediaApplication',
     'offers': {

@@ -54,7 +54,7 @@ export const SuggestionBox: React.FC<SuggestionBoxProps> = ({
     const PUBLIC_KEY = 'zLzMWtYkM-2C2GzLf';     
 
     const templateParams = {
-      email: 'idea-sender@mediavault.app',
+      email: 'idea-sender@imedia.app',
       message: `[فكرة / اقتراح جديد من المستخدم]:\n\n${text}`,
     };
 
@@ -107,7 +107,6 @@ export const SuggestionBox: React.FC<SuggestionBoxProps> = ({
               : 'bg-white border-sky-200 text-slate-900 shadow-2xl'
           }`}
         >
-          {/* رأس الصندوق */}
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-500/20">
             <div className="flex items-center gap-1.5">
               <span className="text-sm">💡</span>

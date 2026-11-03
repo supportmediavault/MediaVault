@@ -3,4 +3,4 @@ User-agent: *
 Allow: /
 
 # تحديد رابط خريطة الموقع الرسمية
-Sitemap: https://mediavault-live.vercel.app/sitemap.xml
+Sitemap: https://imedia.app/sitemap.xml

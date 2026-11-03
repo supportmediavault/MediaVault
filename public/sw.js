@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mediavault-offline-v1';
+const CACHE_NAME = 'imedia-offline-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',
@@ -30,7 +30,6 @@ self.addEventListener('activate', (event) => {
 
 // الاعتراض على الطلبات لخدمة المستخدم حتى لو انقطع الإنترنت
 self.addEventListener('fetch', (event) => {
-  // استثناء طلبات واجهات البريد أو التتبع إن وجدت
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
@@ -40,7 +39,6 @@ self.addEventListener('fetch', (event) => {
       }
       return fetch(event.request)
         .then((response) => {
-          // تخزين نسخة جديدة مؤقتاً تلقائياً
           if (!response || response.status !== 200 || response.type !== 'basic') {
             return response;
           }
@@ -51,7 +49,6 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // في حال انقطع الإنترنت تماماً ولم يتم العثور على الملف
           return caches.match('/');
         });
     })

@@ -12,14 +12,14 @@ export function CookieBanner({ isDarkMode, isRtl, t }: CookieBannerProps) {
   const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
-    const consent = localStorage.getItem('mediavault_cookie_consent');
+    const consent = localStorage.getItem('imedia_cookie_consent');
     if (!consent) {
       setShowBanner(true);
     }
   }, []);
 
   const handleAccept = () => {
-    localStorage.setItem('mediavault_cookie_consent', 'accepted');
+    localStorage.setItem('imedia_cookie_consent', 'accepted');
     setShowBanner(false);
   };
 
@@ -33,8 +33,8 @@ export function CookieBanner({ isDarkMode, isRtl, t }: CookieBannerProps) {
     <div 
       style={{
         position: 'fixed',
-        bottom: '84px', // مرتفع قليلاً عن الفوتر حتى لا يتداخل معه
-        right: '24px',  // ثابت في الزاوية اليمين تماماً
+        bottom: '84px',
+        right: '24px',
         width: '320px',
         maxWidth: '90vw',
         zIndex: 9998,
