@@ -34,6 +34,7 @@ export default function IMediaApp() {
 
   const [targetFormat, setTargetFormat] = useState<string>('webp');
   const [videoResolution, setVideoResolution] = useState<string>('original');
+  const [videoPreset, setVideoPreset] = useState<string>('custom');
   const [compressionLevel, setCompressionLevel] = useState<string>('medium');
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
@@ -93,6 +94,20 @@ export default function IMediaApp() {
   const handleCompressionChange = (comp: string) => {
     setCompressionLevel(comp);
     localStorage.setItem('imedia_pref_compression', comp);
+  };
+
+  const handlePresetChange = (preset: string) => {
+    setVideoPreset(preset);
+    if (preset === 'discord') {
+      setVideoResolution('480');
+      setCompressionLevel('high');
+    } else if (preset === 'whatsapp') {
+      setVideoResolution('480');
+      setCompressionLevel('medium');
+    } else if (preset === 'youtube') {
+      setVideoResolution('1080');
+      setCompressionLevel('low');
+    }
   };
 
   const showToast = (msg: string) => {
@@ -169,6 +184,8 @@ export default function IMediaApp() {
   };
 
   const filteredFileList = fileList.filter((item) => {
+    if (item.status === 'cancelled') return false;
+
     const isImg = item.file.type.startsWith('image/');
     const isAud = item.file.type.startsWith('audio/');
     const isVid = item.file.type.startsWith('video/');
@@ -361,6 +378,13 @@ export default function IMediaApp() {
             </div>
           </div>
 
+          <div className={`p-3 rounded-2xl border text-[11px] leading-relaxed flex items-center gap-2.5 ${
+            isDarkMode ? 'bg-amber-950/10 border-amber-900/30 text-amber-300/90' : 'bg-amber-50/70 border-amber-200/60 text-amber-900'
+          }`}>
+            <span className="text-sm">ℹ️</span>
+            <span>{t.qualityNoteDesc || 'Note: Increasing resolution beyond the original source does not create new pixels or improve native quality.'}</span>
+          </div>
+
           {filteredFileList.length > 0 && (
             <div className={`space-y-3 p-3.5 rounded-2xl border ${isDarkMode ? 'bg-slate-950/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
               <div className="flex items-center justify-between text-xs font-bold text-slate-400 px-1">
@@ -455,9 +479,6 @@ export default function IMediaApp() {
                       {item.status === 'paused' && (
                         <span className="text-amber-500 font-bold">Paused ({item.progress}%)</span>
                       )}
-                      {item.status === 'cancelled' && (
-                        <span className="text-slate-400 font-bold italic">Cancelled</span>
-                      )}
                       {item.status === 'completed' && item.downloadUrl && (
                         <div className="flex items-center gap-1.5">
                           <button
@@ -505,7 +526,7 @@ export default function IMediaApp() {
                         </button>
                       )}
 
-                      {item.status !== 'cancelled' && item.status !== 'completed' && (
+                      {item.status !== 'completed' && (
                         <button
                           onClick={() => queueManager.removeFile(item.id)}
                           className="text-slate-400 hover:text-rose-500 text-sm font-bold px-1 transition-colors cursor-pointer"
@@ -538,7 +559,8 @@ export default function IMediaApp() {
             </div>
           )}
 
-          <div className={`grid grid-cols-1 md:grid-cols-2 gap-3.5 p-4 rounded-2xl border ${isDarkMode ? 'bg-slate-950/40 border-slate-700' : 'bg-slate-50/80 border-slate-200'}`}>
+          {/* خيارات التحكم مع فقاعة التنبيه التفاعلية عند اختيار الـ Preset */}
+          <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 p-4 rounded-2xl border ${isDarkMode ? 'bg-slate-950/40 border-slate-700' : 'bg-slate-50/80 border-slate-200'}`}>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-bold text-slate-400">{t.targetFormat || 'Target Format'}</label>
               <select
@@ -587,23 +609,51 @@ export default function IMediaApp() {
             </div>
 
             {activeTab === 'video' ? (
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold text-slate-400">{t.videoResolution || 'Video Resolution'}</label>
-                <select
-                  value={videoResolution}
-                  onChange={(e) => setVideoResolution(e.target.value)}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer hover:bg-sky-500/10 focus:outline-none ${
-                    isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'
-                  }`}
-                >
-                  <option value="original">Original (Keep Source)</option>
-                  <option value="4k">4K (Ultra HD - 2160p)</option>
-                  <option value="2k">2K (QHD - 1440p)</option>
-                  <option value="1080">Full HD (1080p)</option>
-                  <option value="720">HD (720p)</option>
-                  <option value="480">SD (480p)</option>
-                </select>
-              </div>
+              <>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-400">{t.videoPreset || 'Platform Preset'}</label>
+                  <select
+                    value={videoPreset}
+                    onChange={(e) => handlePresetChange(e.target.value)}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer hover:bg-sky-500/10 focus:outline-none ${
+                      isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'
+                    }`}
+                  >
+                    <option value="custom">{t.presetCustom || 'Custom Settings'}</option>
+                    <option value="discord">🎮 {t.presetDiscord || 'Discord (< 8MB)'}</option>
+                    <option value="whatsapp">💬 {t.presetWhatsapp || 'WhatsApp'}</option>
+                    <option value="youtube">▶️ {t.presetYoutube || 'YouTube (1080p)'}</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1 relative">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-400">{t.videoResolution || 'Video Resolution'}</label>
+                    {videoPreset !== 'custom' && (
+                      <span className="absolute -top-7 right-0 z-10 bg-sky-600 text-white text-[10px] px-2.5 py-1 rounded-xl shadow-lg animate-pulse font-bold whitespace-nowrap">
+                        {isRtl ? '💡 يمكنك التعديل بحرية دون تجاوز الحجم!' : '💡 Adjustable! Watch file size.'}
+                      </span>
+                    )}
+                  </div>
+                  <select
+                    value={videoResolution}
+                    onChange={(e) => {
+                      setVideoResolution(e.target.value);
+                      setVideoPreset('custom');
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer hover:bg-sky-500/10 focus:outline-none ${
+                      isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'
+                    }`}
+                  >
+                    <option value="original">Original (Keep Source)</option>
+                    <option value="4k">4K (Ultra HD - 2160p)</option>
+                    <option value="2k">2K (QHD - 1440p)</option>
+                    <option value="1080">Full HD (1080p)</option>
+                    <option value="720">HD (720p)</option>
+                    <option value="480">SD (480p)</option>
+                  </select>
+                </div>
+              </>
             ) : (
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-bold text-slate-400">{t.compression || 'Compression Level'}</label>
