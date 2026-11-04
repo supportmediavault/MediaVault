@@ -1,3 +1,6 @@
+import { ffmpegManager } from './ffmpegManager';
+import { fetchFile } from '@ffmpeg/util';
+
 export interface VideoOptions {
   resolution: string;
   crf: number;
@@ -15,130 +18,85 @@ async function trackConversion(type: string, count: number, status: string) {
   }
 }
 
-export function convertVideo(
+export async function convertVideo(
   file: File,
   targetFormat: string,
   options: VideoOptions,
   onProgress: (progress: number) => void,
-  signal?: AbortSignal,
-  startFromTime: number = 0,
-  existingChunks: Blob[] = []
+  signal?: AbortSignal
 ): Promise<{ blob: Blob; lastTime: number }> {
-  return new Promise((resolve, reject) => {
+  try {
     if (signal?.aborted) {
       trackConversion('video', 1, 'failed');
-      return reject(new Error('Cancelled'));
+      throw new Error('Cancelled');
     }
 
-    const video = document.createElement('video');
-    video.preload = 'metadata';
-    const objectUrl = URL.createObjectURL(file);
-    video.src = objectUrl;
+    // 1. تحميل محرك FFmpeg (يتم سحبه من الكاش المحلي إذا سبق تحميله، أو تحميله بصمت)
+    onProgress(5);
+    const ffmpeg = await ffmpegManager.load((p) => {
+      // تقدم التحميل الأولي للمكتبة إن لم تكن مخزنة
+      if (p < 100) onProgress(Math.max(5, Math.round(p * 0.2)));
+    });
 
-    const cleanup = () => {
-      URL.revokeObjectURL(objectUrl);
-      video.remove();
-    };
+    if (signal?.aborted) throw new Error('Cancelled');
+    onProgress(25);
 
-    if (signal) {
-      signal.addEventListener('abort', () => {
-        cleanup();
-        trackConversion('video', 1, 'failed');
-        reject({ message: 'Paused', currentBlob: new Blob(existingChunks), lastTime: video.currentTime || startFromTime });
-      }, { once: true });
+    const inputFileName = 'input_' + Date.now() + '.' + file.name.split('.').pop();
+    const outputFileName = 'output_' + Date.now() + '.' + targetFormat;
+
+    // 2. كتابة ملف الفيديو الأصلي إلى ذاكرة FFmpeg الوهمية
+    await ffmpeg.writeFile(inputFileName, await fetchFile(file));
+    onProgress(40);
+
+    if (signal?.aborted) throw new Error('Cancelled');
+
+    // إعداد معاملات التحويل والدقة
+    const ffmpegArgs: string[] = ['-i', inputFileName];
+
+    // تحديد الدقة (Resolution) بناءً على خيارات المستخدم
+    if (options.resolution === '480') {
+      ffmpegArgs.push('-vf', 'scale=-2:480');
+    } else if (options.resolution === '720') {
+      ffmpegArgs.push('-vf', 'scale=-2:720');
+    } else if (options.resolution === '1080') {
+      ffmpegArgs.push('-vf', 'scale=-2:1080');
+    } else if (options.resolution === '2k') {
+      ffmpegArgs.push('-vf', 'scale=-2:1440');
+    } else if (options.resolution === '4k') {
+      ffmpegArgs.push('-vf', 'scale=-2:2160');
     }
 
-    video.onloadedmetadata = () => {
-      if (signal?.aborted) return cleanup();
-      
-      const duration = video.duration || 1;
-      const canvas = document.createElement('canvas');
-      
-      let width = video.videoWidth || 1280;
-      let height = video.videoHeight || 720;
+    // الحفاظ على مسار الصوت وضبط الجودة والترميز السريع
+    ffmpegArgs.push('-c:v', 'libx264', '-crf', String(options.crf || 23), '-c:a', 'aac', '-b:a', '128k');
+    ffmpegArgs.push(outputFileName);
 
-      if (options.resolution === '480') { height = 480; width = Math.round((video.videoWidth / video.videoHeight) * 480); }
-      else if (options.resolution === '720') { height = 720; width = Math.round((video.videoWidth / video.videoHeight) * 720); }
-      else if (options.resolution === '1080') { height = 1080; width = Math.round((video.videoWidth / video.videoHeight) * 1080); }
-      else if (options.resolution === '2k') { height = 1440; width = Math.round((video.videoWidth / video.videoHeight) * 1440); }
-      else if (options.resolution === '4k') { height = 2160; width = Math.round((video.videoWidth / video.videoHeight) * 2160); }
+    // تتبع التقدم الحقيقي أثناء المعالجة
+    ffmpeg.on('progress', ({ progress }) => {
+      const p = Math.round(progress * 50); // النسبة من 40% إلى 90%
+      onProgress(Math.min(90, 40 + p));
+    });
 
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
+    // تنفيذ عملية التحويل الصاروخية
+    await ffmpeg.exec(ffmpegArgs);
 
-      if (!ctx) {
-        cleanup();
-        trackConversion('video', 1, 'failed');
-        return reject(new Error('Canvas context failed'));
-      }
+    if (signal?.aborted) throw new Error('Cancelled');
+    onProgress(95);
 
-      const stream = canvas.captureStream(30);
-      let mimeType = 'video/webm';
-      if (targetFormat === 'mp4' && MediaRecorder.isTypeSupported('video/mp4')) {
-        mimeType = 'video/mp4';
-      }
+    // 3. قراءة الملف الناتج من الذاكرة وتحويله إلى Blob
+    const data = await ffmpeg.readFile(outputFileName);
+    const mimeType = targetFormat === 'mp4' ? 'video/mp4' : targetFormat === 'webm' ? 'video/webm' : 'video/mp4';
+    const blob = new Blob([data], { type: mimeType });
 
-      let mediaRecorder: MediaRecorder;
-      try {
-        mediaRecorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2500000 });
-      } catch (e) {
-        mediaRecorder = new MediaRecorder(stream);
-      }
+    // تنظيف الملفات من ذاكرة الـ FFmpeg المؤقتة لمنع استهلاك الذاكرة
+    await ffmpeg.deleteFile(inputFileName);
+    await ffmpeg.deleteFile(outputFileName);
 
-      const chunks: Blob[] = [...existingChunks];
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) chunks.push(e.data);
-      };
+    onProgress(100);
+    trackConversion('video', 1, 'success');
+    return { blob, lastTime: 0 };
 
-      mediaRecorder.onstop = () => {
-        cleanup();
-        const blob = new Blob(chunks, { type: mimeType });
-        trackConversion('video', 1, 'success');
-        resolve({ blob, lastTime: duration });
-      };
-
-      mediaRecorder.start();
-
-      let currentTime = startFromTime;
-      const fps = 15;
-      const step = 1 / fps;
-
-      const processFrame = () => {
-        if (signal?.aborted) return;
-
-        if (currentTime >= duration) {
-          mediaRecorder.stop();
-          return;
-        }
-
-        video.currentTime = currentTime;
-      };
-
-      video.onseeked = () => {
-        if (signal?.aborted) return;
-        ctx.drawImage(video, 0, 0, width, height);
-        
-        const progress = Math.min(Math.round((currentTime / duration) * 100), 99);
-        onProgress(progress);
-
-        currentTime += step;
-        processFrame();
-      };
-
-      video.onerror = () => {
-        cleanup();
-        trackConversion('video', 1, 'failed');
-        reject(new Error('Video loading error'));
-      };
-
-      video.currentTime = startFromTime;
-    };
-
-    video.onerror = () => {
-      cleanup();
-      trackConversion('video', 1, 'failed');
-      reject(new Error('Failed to load video metadata'));
-    };
-  });
+  } catch (error: any) {
+    trackConversion('video', 1, 'failed');
+    throw error;
+  }
 }
