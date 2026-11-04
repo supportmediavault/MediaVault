@@ -4,42 +4,44 @@ import { toBlobURL } from '@ffmpeg/util';
 class FFmpegManager {
   private ffmpeg: FFmpeg | null = null;
   private loaded: boolean = false;
-  private loadPromise: Promise<void> | null = null;
+  private loadingPromise: Promise<FFmpeg> | null = null;
 
-  public async load(onProgress?: (progress: number) => void): Promise<FFmpeg> {
-    if (this.loaded && this.ffmpeg) return this.ffmpeg;
-    if (this.loadPromise) {
-      await this.loadPromise;
-      if (this.ffmpeg) return this.ffmpeg;
+  async load(onProgress?: (progress: number) => void): Promise<FFmpeg> {
+    if (this.loaded && this.ffmpeg) {
+      return this.ffmpeg;
     }
 
-    this.loadPromise = (async () => {
-      this.ffmpeg = new FFmpeg();
+    if (this.loadingPromise) {
+      return this.loadingPromise;
+    }
 
-      // تتبع تقدم التحميل الخفي في الخلفية (لأول زيارة فقط)
-      if (onProgress) {
-        this.ffmpeg.on('progress', ({ progress }) => {
-          onProgress(Math.round(progress * 100));
+    this.loadingPromise = (async () => {
+      try {
+        if (!this.ffmpeg) {
+          this.ffmpeg = new FFmpeg();
+        }
+
+        // تتبع تقدم تحميل مكتبة الـ WASM لأول مرة
+        this.ffmpeg.on('log', ({ message }) => {
+          // يمكن التقاط الرسائل للتصحيح إذا لزم الأمر
         });
+
+        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+        
+        await this.ffmpeg.load({
+          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+        });
+
+        this.loaded = true;
+        return this.ffmpeg;
+      } catch (error) {
+        this.loadingPromise = null;
+        throw error;
       }
-
-      // جلب ملفات الـ WASM من شبكة التوزيع (CDN) بشكل آمن وموثوق
-      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
-      await this.ffmpeg.load({
-        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-      });
-
-      this.loaded = true;
     })();
 
-    await this.loadPromise;
-    if (!this.ffmpeg) throw new Error('Failed to load FFmpeg');
-    return this.ffmpeg;
-  }
-
-  public isLoaded(): boolean {
-    return this.loaded;
+    return this.loadingPromise;
   }
 }
 

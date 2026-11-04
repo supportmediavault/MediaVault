@@ -43,18 +43,17 @@ export async function convertVideo(
     const inputFileName = `input_${Date.now()}.${inputExt}`;
     const outputFileName = `output_${Date.now()}.${targetFormat.toLowerCase()}`;
 
-    // كتابة الملف الحقيقي إلى ذاكرة الـ FFmpeg
+    // كتابة الملف للذاكرة الوهمية
     await ffmpeg.writeFile(inputFileName, await fetchFile(file));
     onProgress(35);
 
     if (signal?.aborted) throw new Error('Cancelled');
 
-    // بناء أوامر التحويل الحقيقي المبرمج بدقة
     const ffmpegArgs: string[] = ['-i', inputFileName];
 
-    // تحديد الدقة المطلوبة إن وجدت
+    // ضبط الدقة إن وجدت
     if (options.resolution && options.resolution !== 'original' && options.resolution !== 'auto') {
-      let scaleFilter = 'scale=-2:720'; // افتراضي آمن
+      let scaleFilter = 'scale=-2:720';
       if (options.resolution === '480') scaleFilter = 'scale=-2:480';
       else if (options.resolution === '720') scaleFilter = 'scale=-2:720';
       else if (options.resolution === '1080') scaleFilter = 'scale=-2:1080';
@@ -64,36 +63,36 @@ export async function convertVideo(
       ffmpegArgs.push('-vf', scaleFilter);
     }
 
-    // إعدادات التشفير الحقيقي (Re-encoding) مع تحسين السرعة القصوى لمعالج الهاتف
+    // إعدادات التشفير الحقيقي مع تحسين استغلال المعالج
     ffmpegArgs.push(
       '-c:v', 'libx264',
-      '-preset', 'ultrafast', // استخدام أسرع نمط ضغط هندسي لتقليل الوقت على الهواتف
-      '-crf', String(options.crf || 23), // الحفاظ على الجودة المطلوبة
-      '-c:a', 'aac', // ترميز الصوت لضمان عمله بوضوح تام
+      '-preset', 'ultrafast',
+      '-crf', String(options.crf || 23),
+      '-c:a', 'aac',
       '-b:a', '128k',
-      '-threads', '0' // تشغيل كافة أنوية معالج الهاتف للمعالجة المتوازية
+      '-threads', '0'
     );
 
     ffmpegArgs.push(outputFileName);
 
-    // تتبع التقدم الحقيقي خطوة بخطوة
+    // تتبع التقدم بدقة
     ffmpeg.on('progress', ({ progress }) => {
-      const p = Math.round(progress * 55); // النسبة من 35% إلى 90%
+      // progress تكون عادة بين 0 و 1
+      const normalizedProgress = Math.max(0, Math.min(1, progress));
+      const p = Math.round(normalizedProgress * 55); // النسبة من 35% إلى 90%
       onProgress(Math.min(90, 35 + p));
     });
 
-    // التنفيذ الفعلي لعملية التحويل الحقيقي
     await ffmpeg.exec(ffmpegArgs);
 
     if (signal?.aborted) throw new Error('Cancelled');
     onProgress(95);
 
-    // قراءة الملف الناتج
     const data = await ffmpeg.readFile(outputFileName);
     const mimeType = targetFormat === 'mp4' ? 'video/mp4' : targetFormat === 'webm' ? 'video/webm' : 'video/mp4';
     const blob = new Blob([data], { type: mimeType });
 
-    // تنظيف الذاكرة المؤقتة
+    // تنظيف الذاكرة لمنع تسريب الذاكرة (Memory Leaks) للملفات الكبيرة
     await ffmpeg.deleteFile(inputFileName);
     await ffmpeg.deleteFile(outputFileName);
 
