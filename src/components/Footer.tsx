@@ -43,7 +43,7 @@ export const Footer: React.FC<FooterProps> = ({
     }
   }, [setUserRating, setRatingSubmitted]);
 
-  const handleRate = (star: number) => {
+  const handleRate = async (star: number) => {
     if (ratingSubmitted) return;
 
     setUserRating(star);
@@ -51,6 +51,17 @@ export const Footer: React.FC<FooterProps> = ({
     setTotalVotes((prev) => prev + 1);
     
     localStorage.setItem('imedia_user_rating', star.toString());
+
+    // إرسال التقييم إلى الـ API
+    try {
+      await fetch('/api/rating', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: star }),
+      });
+    } catch (err) {
+      console.error('Failed to submit rating:', err);
+    }
 
     setShowThankYou(true);
     setTimeout(() => {

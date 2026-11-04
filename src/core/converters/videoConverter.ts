@@ -3,6 +3,18 @@ export interface VideoOptions {
   crf: number;
 }
 
+async function trackConversion(type: string, count: number, status: string) {
+  try {
+    await fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, count, status }),
+    });
+  } catch (e) {
+    // نتجاهل الخطأ بصمت
+  }
+}
+
 export function convertVideo(
   file: File,
   targetFormat: string,
@@ -14,6 +26,7 @@ export function convertVideo(
 ): Promise<{ blob: Blob; lastTime: number }> {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) {
+      trackConversion('video', 1, 'failed');
       return reject(new Error('Cancelled'));
     }
 
@@ -30,7 +43,7 @@ export function convertVideo(
     if (signal) {
       signal.addEventListener('abort', () => {
         cleanup();
-        // إرجاع الملف بحالته الحالية مع الـ chunks والنقطة التي توقف عندها لاستئنافه لاحقاً
+        trackConversion('video', 1, 'failed');
         reject({ message: 'Paused', currentBlob: new Blob(existingChunks), lastTime: video.currentTime || startFromTime });
       }, { once: true });
     }
@@ -56,6 +69,7 @@ export function convertVideo(
 
       if (!ctx) {
         cleanup();
+        trackConversion('video', 1, 'failed');
         return reject(new Error('Canvas context failed'));
       }
 
@@ -80,6 +94,7 @@ export function convertVideo(
       mediaRecorder.onstop = () => {
         cleanup();
         const blob = new Blob(chunks, { type: mimeType });
+        trackConversion('video', 1, 'success');
         resolve({ blob, lastTime: duration });
       };
 
@@ -113,15 +128,16 @@ export function convertVideo(
 
       video.onerror = () => {
         cleanup();
+        trackConversion('video', 1, 'failed');
         reject(new Error('Video loading error'));
       };
 
-      // بدء المعالجة من النقطة المحددة (سواء من الصفر أو من نقطة الاستئناف)
       video.currentTime = startFromTime;
     };
 
     video.onerror = () => {
       cleanup();
+      trackConversion('video', 1, 'failed');
       reject(new Error('Failed to load video metadata'));
     };
   });

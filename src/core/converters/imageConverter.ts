@@ -1,5 +1,17 @@
 export type ImageFormat = 'webp' | 'png' | 'jpeg' | 'jpg' | 'avif' | 'gif' | 'bmp' | 'ico';
 
+async function trackConversion(type: string, count: number, status: string) {
+  try {
+    await fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, count, status }),
+    });
+  } catch (e) {
+    // نتجاهل الخطأ بصمت
+  }
+}
+
 export async function convertImage(
   file: File,
   targetFormat: ImageFormat,
@@ -17,6 +29,7 @@ export async function convertImage(
 
         const ctx = canvas.getContext('2d');
         if (!ctx) {
+          trackConversion('image', 1, 'failed');
           reject(new Error('فشل تهيئة محرك الصور.'));
           return;
         }
@@ -34,8 +47,10 @@ export async function convertImage(
         canvas.toBlob(
           (blob) => {
             if (blob) {
+              trackConversion('image', 1, 'success');
               resolve(blob);
             } else {
+              trackConversion('image', 1, 'failed');
               reject(new Error('فشل تحويل الصورة.'));
             }
           },
@@ -44,11 +59,17 @@ export async function convertImage(
         );
       };
 
-      img.onerror = () => reject(new Error('فشل قراءة ملف الصورة.'));
+      img.onerror = () => {
+        trackConversion('image', 1, 'failed');
+        reject(new Error('فشل قراءة ملف الصورة.'));
+      };
       img.src = e.target?.result as string;
     };
 
-    reader.onerror = () => reject(new Error('فشل قراءة الملف.'));
+    reader.onerror = () => {
+      trackConversion('image', 1, 'failed');
+      reject(new Error('فشل قراءة الملف.'));
+    };
     reader.readAsDataURL(file);
   });
 }

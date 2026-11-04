@@ -1,3 +1,16 @@
+// دالة مساعدة لتسجيل النشاط
+async function trackConversion(type: string, count: number, status: string) {
+  try {
+    await fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, count, status }),
+    });
+  } catch (e) {
+    // نتجاهل الخطأ بصمت لتجنب تعطيل تجربة المستخدم
+  }
+}
+
 export async function convertAudio(
   file: File,
   targetFormat: string,
@@ -6,6 +19,7 @@ export async function convertAudio(
 ): Promise<Blob> {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) {
+      trackConversion('audio', 1, 'failed');
       return reject({ message: 'Paused' });
     }
 
@@ -15,12 +29,14 @@ export async function convertAudio(
 
     signal?.addEventListener('abort', () => {
       reader.abort();
+      trackConversion('audio', 1, 'failed');
       reject({ message: 'Paused' });
     });
 
     reader.onload = async (e) => {
       try {
         if (signal?.aborted) {
+          trackConversion('audio', 1, 'failed');
           return reject({ message: 'Paused' });
         }
 
@@ -45,6 +61,7 @@ export async function convertAudio(
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
         if (!AudioContextClass) {
           if (onProgress) onProgress(100);
+          trackConversion('audio', 1, 'success');
           return resolve(new Blob([arrayBuffer], { type: targetMime }));
         }
 
@@ -55,6 +72,7 @@ export async function convertAudio(
           (decodedBuffer) => {
             if (signal?.aborted) {
               audioCtx.close();
+              trackConversion('audio', 1, 'failed');
               return reject({ message: 'Paused' });
             }
 
@@ -64,18 +82,22 @@ export async function convertAudio(
             audioCtx.close();
             
             if (onProgress) onProgress(100);
+            trackConversion('audio', 1, 'success');
             resolve(convertedBlob);
           },
           (decodeErr) => {
             if (signal?.aborted) {
+              trackConversion('audio', 1, 'failed');
               return reject({ message: 'Paused' });
             }
             if (onProgress) onProgress(100);
             const fallbackBlob = new Blob([file], { type: targetMime });
+            trackConversion('audio', 1, 'success');
             resolve(fallbackBlob);
           }
         );
       } catch (err) {
+        trackConversion('audio', 1, 'failed');
         if (signal?.aborted) {
           reject({ message: 'Paused' });
         } else {
@@ -85,6 +107,7 @@ export async function convertAudio(
     };
 
     reader.onerror = () => {
+      trackConversion('audio', 1, 'failed');
       reject(new Error('فشل قراءة الملف الصوتي.'));
     };
 
