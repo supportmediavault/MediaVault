@@ -37,7 +37,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
     };
 
     const handleMouseMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY);
-    
+
     const handleTouchMove = (e: TouchEvent) => {
       if (!isDragging) return;
       if (e.touches.length > 0) {
@@ -76,31 +76,52 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
         }}
         onMouseDown={(e) => {
           const target = e.target as HTMLElement;
-          if (target.closest('button') || target.closest('a') || target.closest('audio') || target.closest('video')) {
+          if (
+            target.closest('button') ||
+            target.closest('a') ||
+            target.closest('audio') ||
+            target.closest('video')
+          ) {
             return;
           }
           setIsDragging(true);
-          setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+          setDragStart({
+            x: e.clientX - position.x,
+            y: e.clientY - position.y,
+          });
         }}
         onTouchStart={(e) => {
           const target = e.target as HTMLElement;
-          if (target.closest('button') || target.closest('a') || target.closest('audio') || target.closest('video')) {
+          if (
+            target.closest('button') ||
+            target.closest('a') ||
+            target.closest('audio') ||
+            target.closest('video')
+          ) {
             return;
           }
           if (e.touches.length > 0) {
             setIsDragging(true);
-            setDragStart({ x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y });
+            setDragStart({
+              x: e.touches[0].clientX - position.x,
+              y: e.touches[0].clientY - position.y,
+            });
           }
         }}
         className={`pointer-events-auto shadow-2xl flex flex-col w-[85%] max-w-[260px] rounded-2xl p-3 cursor-grab active:cursor-grabbing select-none transition-shadow touch-none ${
-          isDarkMode ? 'bg-slate-900 border border-slate-700 text-slate-100' : 'bg-white border border-slate-200 text-slate-800'
+          isDarkMode
+            ? 'bg-slate-900 border border-slate-700 text-slate-100'
+            : 'bg-white border border-slate-200 text-slate-800'
         }`}
       >
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-700/25">
-          <h3 className="text-xs font-bold truncate max-w-[80%]" title={mediaName}>
+          <h3
+            className="text-xs font-bold truncate max-w-[80%]"
+            title={mediaName}
+          >
             👁️ {mediaName}
           </h3>
-          
+
           <button
             onClick={onClose}
             className="w-6 h-6 rounded-full flex items-center justify-center bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer text-xs font-bold"
@@ -112,10 +133,10 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
 
         <div className="flex items-center justify-center bg-slate-950 rounded-xl p-2 overflow-hidden min-h-[110px] max-h-[30vh]">
           {mediaType === 'image' && (
-            <img 
-              src={mediaUrl} 
-              alt={mediaName} 
-              className="object-contain rounded-lg shadow-md max-h-[110px]" 
+            <img
+              src={mediaUrl}
+              alt={mediaName}
+              className="object-contain rounded-lg shadow-md max-h-[110px]"
             />
           )}
           {mediaType === 'audio' && (
@@ -125,10 +146,10 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
             </div>
           )}
           {mediaType === 'video' && (
-            <video 
-              src={mediaUrl} 
-              controls 
-              className="w-full rounded-lg shadow-md max-h-[110px]" 
+            <video
+              src={mediaUrl}
+              controls
+              className="w-full rounded-lg shadow-md max-h-[110px]"
             />
           )}
         </div>
@@ -141,11 +162,13 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
           >
             📥 Download
           </a>
-          
+
           <button
             onClick={onClose}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
-              isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
+              isDarkMode
+                ? 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
             }`}
           >
             Close

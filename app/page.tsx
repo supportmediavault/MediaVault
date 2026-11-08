@@ -5,7 +5,8 @@ import { queueManager, QueueItem } from '@/src/core/queueManager';
 import { convertImage } from '@/src/core/converters/imageConverter';
 import { convertAudio } from '@/src/core/converters/audioConverter';
 import { convertVideo } from '@/src/core/converters/videoConverter';
-import { baseTranslations, LANGUAGES } from '@/src/core/i18n/translator';
+import { extractAudioFromVideo } from '@/src/core/converters/audioExtractor';
+import { baseTranslations } from '@/src/core/i18n/translator';
 
 import { Header } from '@/src/components/Header';
 import { Footer } from '@/src/components/Footer';
@@ -16,6 +17,8 @@ import { SuggestionBox } from '@/src/components/SuggestionBox';
 import { CookieBanner } from '@/src/components/CookieBanner';
 import { WasmChecker } from '@/src/components/WasmChecker';
 import { PreviewModal } from '@/src/components/PreviewModal';
+import { FileItemCard } from '@/src/components/FileItemCard';
+import { FileOptionsModal } from '@/src/components/FileOptionsModal';
 
 type TabType = 'image' | 'audio' | 'video';
 
@@ -29,18 +32,18 @@ export default function IMediaApp() {
   const [fileList, setFileList] = useState<QueueItem[]>([]);
   const [isGlobalPaused, setIsGlobalPaused] = useState<boolean>(false);
   
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [tempName, setTempName] = useState<string>('');
+  const [extractedAudioUrls, setExtractedAudioUrls] = useState<{ [id: string]: string }>({});
 
-  const [targetFormat, setTargetFormat] = useState<string>('webp');
-  const [videoResolution, setVideoResolution] = useState<string>('original');
-  const [videoPreset, setVideoPreset] = useState<string>('custom');
-  const [compressionLevel, setCompressionLevel] = useState<string>('medium');
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [isZipLoading, setIsZipLoading] = useState<boolean>(false);
+
+  // حالة الصيغة العامة المطبقة على الكل (Global Format Apply)
+  const [globalFormat, setGlobalFormat] = useState<string>('webp');
 
   const [sessionStats, setSessionStats] = useState({ convertedCount: 0, totalBytesProcessed: 0 });
   const [previewItem, setPreviewItem] = useState<{ url: string; name: string; type: TabType } | null>(null);
+  const [activeOptionsItem, setActiveOptionsItem] = useState<QueueItem | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [isSupportOpen, setIsSupportOpen] = useState<boolean>(false);
@@ -51,6 +54,10 @@ export default function IMediaApp() {
   const [userRating, setUserRating] = useState<number>(0);
   const [ratingSubmitted, setRatingSubmitted] = useState<boolean>(false);
   const [totalVotes, setTotalVotes] = useState<number>(42);
+
+  // حالة تقسيم الصفحات (Pagination) لعرض 20 عنصر فقط في الشاشة لضمان عدم بطء الواجهة
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
@@ -69,50 +76,19 @@ export default function IMediaApp() {
     metaDesc.setAttribute('content', t.mainDesc || 'Fast, secure local media conversion.');
   }, [lang, t]);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch((err) => {
-          console.error('Service Worker registration failed: ', err);
-        });
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    const savedFormat = localStorage.getItem(`imedia_pref_format_${activeTab}`);
-    const savedComp = localStorage.getItem('imedia_pref_compression');
-    if (savedFormat) setTargetFormat(savedFormat);
-    if (savedComp) setCompressionLevel(savedComp);
-  }, [activeTab]);
-
-  const handleFormatChange = (fmt: string) => {
-    setTargetFormat(fmt);
-    localStorage.setItem(`imedia_pref_format_${activeTab}`, fmt);
-  };
-
-  const handleCompressionChange = (comp: string) => {
-    setCompressionLevel(comp);
-    localStorage.setItem('imedia_pref_compression', comp);
-  };
-
-  const handlePresetChange = (preset: string) => {
-    setVideoPreset(preset);
-    if (preset === 'discord') {
-      setVideoResolution('480');
-      setCompressionLevel('high');
-    } else if (preset === 'whatsapp') {
-      setVideoResolution('480');
-      setCompressionLevel('medium');
-    } else if (preset === 'youtube') {
-      setVideoResolution('1080');
-      setCompressionLevel('low');
-    }
-  };
-
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleResetItem = (id: string) => {
+    queueManager.resetFile(id); 
+    setExtractedAudioUrls(prev => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+    showToast(isRtl ? '🔄 تمت إعادة تعيين الملف والإعدادات بنجاح' : '🔄 File and options reset successfully');
   };
 
   useEffect(() => {
@@ -144,57 +120,63 @@ export default function IMediaApp() {
     };
   }, [fileList, isRtl]);
 
-  useEffect(() => {
-    const defaultFormat = activeTab === 'image' ? 'webp' : activeTab === 'audio' ? 'mp3' : 'mp4';
-    const saved = localStorage.getItem(`imedia_pref_format_${activeTab}`);
-    setTargetFormat(saved || defaultFormat);
-    setTypeError(null);
-  }, [activeTab]);
-
   const validateAndAddFiles = (files: FileList | File[]) => {
     setTypeError(null);
-    const validFiles: File[] = [];
+    const fileArray = Array.from(files);
+    if (fileArray.length === 0) return;
 
-    Array.from(files).forEach((f) => {
-      const isImg = f.type.startsWith('image/');
-      const isAud = f.type.startsWith('audio/');
-      const isVid = f.type.startsWith('video/');
-
-      if (activeTab === 'image' && !isImg) return;
-      if (activeTab === 'audio' && !isAud) return;
-      if (activeTab === 'video' && !isVid) return;
-
-      validFiles.push(f);
-    });
-
-    if (validFiles.length === 0 && files.length > 0) {
-      setTypeError(t.invalidFileType || 'Invalid file type selected');
-      return;
+    const firstFile = fileArray[0];
+    let detectedTab: TabType = 'video';
+    
+    if (firstFile.type.startsWith('image/') || /\.(webp|png|jpeg|jpg|avif|gif|bmp|ico)$/i.test(firstFile.name)) {
+      detectedTab = 'image';
+    } else if (firstFile.type.startsWith('audio/') || /\.(mp3|wav|ogg|aac|m4a|flac)$/i.test(firstFile.name)) {
+      detectedTab = 'audio';
+    } else if (firstFile.type.startsWith('video/') || /\.(mp4|webm|mov|avi|mkv|flv|3gp|m4v|ts)$/i.test(firstFile.name)) {
+      detectedTab = 'video';
     }
 
-    queueManager.addFiles(validFiles);
+    setActiveTab(detectedTab);
+    const defaultFmt = detectedTab === 'image' ? 'webp' : detectedTab === 'audio' ? 'mp3' : 'mp4';
+    queueManager.addFiles(fileArray, detectedTab, defaultFmt);
   };
 
   const startConversion = () => {
-    const quality = compressionLevel === 'high' ? 0.70 : compressionLevel === 'low' ? 0.95 : 0.85;
-    const crf = compressionLevel === 'high' ? 28 : compressionLevel === 'low' ? 18 : 23;
-    const options = { resolution: videoResolution, crf, quality };
+    queueManager.start(activeTab);
+  };
 
-    queueManager.start(activeTab, targetFormat, options);
+  // دالة تطبيق الصيغة على جميع الملفات دفعة واحدة (Apply to All)
+  const handleApplyGlobalFormat = (newFormat: string) => {
+    setGlobalFormat(newFormat);
+    filteredFileList.forEach(item => {
+      queueManager.updateFileFormat(item.id, newFormat);
+    });
+    showToast(isRtl ? `✨ تم تطبيق الصيغة (${newFormat.toUpperCase()}) على جميع الملفات (${filteredFileList.length})` : `✨ Applied format (${newFormat.toUpperCase()}) to all ${filteredFileList.length} files`);
   };
 
   const filteredFileList = fileList.filter((item) => {
     if (item.status === 'cancelled') return false;
 
-    const isImg = item.file.type.startsWith('image/');
-    const isAud = item.file.type.startsWith('audio/');
-    const isVid = item.file.type.startsWith('video/');
+    const fileType = item.file.type;
+    const isImg = fileType.startsWith('image/') || /\.(webp|png|jpeg|jpg|avif|gif|bmp|ico)$/i.test(item.file.name);
+    const isAud = fileType.startsWith('audio/') || /\.(mp3|wav|ogg|aac|m4a|flac)$/i.test(item.file.name);
+    const isVid = fileType.startsWith('video/') || /\.(mp4|webm|mov|avi|mkv|flv|3gp|m4v|ts)$/i.test(item.file.name);
 
     if (activeTab === 'image') return isImg;
     if (activeTab === 'audio') return isAud;
     if (activeTab === 'video') return isVid;
     return true;
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, fileList.length]);
+
+  const totalPages = Math.ceil(filteredFileList.length / itemsPerPage);
+  const paginatedFileList = filteredFileList.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const handleDownloadAllSeparately = async () => {
     const completedItems = filteredFileList.filter(item => item.status === 'completed' && item.downloadUrl);
@@ -203,7 +185,7 @@ export default function IMediaApp() {
       const item = completedItems[i];
       const a = document.createElement('a');
       a.href = item.downloadUrl!;
-      a.download = `${item.customName || 'converted'}.${targetFormat}`;
+      a.download = `${item.customName || 'converted'}.${item.targetFormat}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -214,8 +196,16 @@ export default function IMediaApp() {
     }
   };
 
-  const handleDownloadAsZip = () => {
-    queueManager.downloadAllAsZip(targetFormat);
+  const handleDownloadAsZip = async () => {
+    try {
+      setIsZipLoading(true);
+      showToast(isRtl ? '📦 جاري تجهيز وضغط الملفات في مجلد ZIP...' : '📦 Preparing ZIP archive for files...');
+      await queueManager.downloadAllAsZip(filteredFileList);
+    } catch (e) {
+      showToast(isRtl ? '❌ حدث خطأ أثناء إنشاء ملف الـ ZIP' : '❌ Failed to create ZIP archive');
+    } finally {
+      setIsZipLoading(false);
+    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -225,27 +215,15 @@ export default function IMediaApp() {
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
   };
 
-  const calculateEstimatedSize = (originalSize: number) => {
-    let multiplier = 0.85;
-    if (compressionLevel === 'high') multiplier = 0.40;
-    if (compressionLevel === 'low') multiplier = 0.95;
-    if (videoResolution === '480') multiplier *= 0.5;
-    if (videoResolution === '720') multiplier *= 0.7;
-    if (videoResolution === '2k') multiplier *= 1.1;
-    if (videoResolution === '4k') multiplier *= 1.5;
-    const est = originalSize * multiplier;
-    return formatFileSize(est);
-  };
-
   const hasActiveConverting = filteredFileList.some(i => i.status === 'converting');
   const hasPaused = filteredFileList.some(i => i.status === 'paused');
-  const completedCount = filteredFileList.filter((item) => item.status === 'completed').length;
-  const hasLargeFile = filteredFileList.some(i => i.file.size > 1024 * 1024 * 1024);
+  const completedItemsList = filteredFileList.filter((item) => item.status === 'completed');
+  const completedCount = completedItemsList.length;
+  
+  const totalCompletedBytes = completedItemsList.reduce((acc, curr) => acc + (curr.file?.size || 0), 0);
+  const totalFormattedSize = formatFileSize(totalCompletedBytes);
 
-  const getFormatDescription = () => {
-    const formatMap = t.formatDescriptions || baseTranslations.en.formatDescriptions;
-    return formatMap[targetFormat] || 'High performance media conversion format.';
-  };
+  const hasLargeFile = filteredFileList.some(i => i.file.size > 1024 * 1024 * 1024);
 
   return (
     <div
@@ -257,7 +235,7 @@ export default function IMediaApp() {
       }`}
     >
       {toastMessage && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-sky-600 text-white px-5 py-2.5 rounded-2xl shadow-2xl text-xs font-bold animate-bounce">
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[999999] bg-sky-600 text-white px-5 py-2.5 rounded-2xl shadow-2xl text-xs font-bold animate-bounce">
           {toastMessage}
         </div>
       )}
@@ -270,11 +248,11 @@ export default function IMediaApp() {
         t={t}
       />
 
-      <main className="max-w-6xl mx-auto px-4 pt-32 pb-36 w-full flex-grow space-y-8">
+      <main className="max-w-6xl mx-auto px-4 pt-32 pb-24 w-full flex-grow flex flex-col gap-8">
         
         <WasmChecker isDarkMode={isDarkMode} isRtl={isRtl} />
 
-        <div className="text-center space-y-3">
+        <div className="text-center space-y-3 flex-shrink-0">
           <h1 className={`text-2xl md:text-3xl font-black tracking-tight leading-tight bg-gradient-to-r ${
             isDarkMode 
               ? 'from-sky-300 via-blue-400 to-indigo-300 drop-shadow-[0_4px_16px_rgba(56,189,248,0.35)]' 
@@ -282,7 +260,8 @@ export default function IMediaApp() {
           } bg-clip-text text-transparent py-1`}>
             {t.mainHeading}
           </h1>
-          <p className={`text-xs md:text-sm max-w-xl mx-auto leading-relaxed font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+          
+          <p className={`text-sm md:text-[17.5px] max-w-2xl mx-auto leading-relaxed font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
             {t.mainDesc}
           </p>
 
@@ -297,7 +276,7 @@ export default function IMediaApp() {
         </div>
 
         <div
-          className={`rounded-3xl p-5 md:p-8 shadow-2xl backdrop-blur-xl relative space-y-5 border ${
+          className={`rounded-3xl p-5 md:p-8 shadow-2xl backdrop-blur-xl space-y-5 border flex-shrink-0 ${
             isDarkMode
               ? 'bg-slate-900/90 border-slate-700 text-slate-100 shadow-sky-950/20'
               : 'bg-white/95 border-sky-100 text-slate-800 shadow-sky-100/50'
@@ -378,30 +357,85 @@ export default function IMediaApp() {
             </div>
           </div>
 
-          <div className={`p-3 rounded-2xl border text-[11px] leading-relaxed flex items-center gap-2.5 ${
-            isDarkMode ? 'bg-amber-950/10 border-amber-900/30 text-amber-300/90' : 'bg-amber-50/70 border-amber-200/60 text-amber-900'
-          }`}>
-            <span className="text-sm">ℹ️</span>
-            <span>{t.qualityNoteDesc || 'Note: Increasing resolution beyond the original source does not create new pixels or improve native quality.'}</span>
-          </div>
-
           {filteredFileList.length > 0 && (
-            <div className={`space-y-3 p-3.5 rounded-2xl border ${isDarkMode ? 'bg-slate-950/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
-              <div className="flex items-center justify-between text-xs font-bold text-slate-400 px-1">
-                <span>{t.selectedFiles} ({filteredFileList.length}):</span>
-                <div className="flex items-center gap-3">
+            <div className="space-y-4 pt-2">
+              
+              {/* شريط التحكم العام (Global Batch Toolbar) لتطبيق الصيغة على الكل دفعة واحدة */}
+              <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-3 ${
+                isDarkMode ? 'bg-slate-950/80 border-slate-800' : 'bg-sky-50/80 border-sky-200'
+              }`}>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">⚡</span>
+                  <span className="text-xs font-black">
+                    {isRtl ? `تطبيق الصيغة على الكل (${filteredFileList.length} ملف):` : `Apply Format to All (${filteredFileList.length} files):`}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <select
+                    value={globalFormat}
+                    onChange={(e) => handleApplyGlobalFormat(e.target.value)}
+                    className={`px-3 py-2 rounded-xl border text-xs font-black cursor-pointer ${
+                      isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                    }`}
+                  >
+                    {activeTab === 'image' && (
+                      <>
+                        <option value="webp">WEBP</option>
+                        <option value="png">PNG</option>
+                        <option value="jpeg">JPEG</option>
+                        <option value="jpg">JPG</option>
+                        <option value="avif">AVIF</option>
+                        <option value="gif">GIF</option>
+                        <option value="bmp">BMP</option>
+                        <option value="ico">ICO</option>
+                      </>
+                    )}
+                    {activeTab === 'audio' && (
+                      <>
+                        <option value="mp3">MP3</option>
+                        <option value="wav">WAV</option>
+                        <option value="ogg">OGG</option>
+                        <option value="aac">AAC</option>
+                        <option value="m4a">M4A</option>
+                        <option value="flac">FLAC</option>
+                      </>
+                    )}
+                    {activeTab === 'video' && (
+                      <>
+                        <option value="mp4">MP4</option>
+                        <option value="webm">WEBM</option>
+                        <option value="mov">MOV</option>
+                        <option value="avi">AVI</option>
+                        <option value="mkv">MKV</option>
+                      </>
+                    )}
+                  </select>
+
+                  <button
+                    onClick={() => handleApplyGlobalFormat(globalFormat)}
+                    className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-black transition-all shadow-md cursor-pointer"
+                  >
+                    {isRtl ? 'تطبيق على الكل' : 'Apply to All'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-bold text-slate-400">{t.selectedFiles} ({filteredFileList.length}):</span>
+                <div className="flex items-center gap-3 text-xs font-bold">
                   {hasActiveConverting && (
                     <button
                       onClick={() => queueManager.pauseAll()}
-                      className="text-amber-500 hover:underline cursor-pointer font-bold"
+                      className="text-amber-500 hover:underline cursor-pointer"
                     >
                       ⏸ Pause All
                     </button>
                   )}
                   {!hasActiveConverting && hasPaused && (
                     <button
-                      onClick={() => queueManager.resumeAll(activeTab, targetFormat, { quality: compressionLevel === 'high' ? 0.70 : compressionLevel === 'low' ? 0.95 : 0.85 })}
-                      className="text-sky-500 hover:underline cursor-pointer font-bold"
+                      onClick={() => queueManager.resumeAll(activeTab)}
+                      className="text-sky-500 hover:underline cursor-pointer"
                     >
                       ▶ Resume All
                     </button>
@@ -414,273 +448,110 @@ export default function IMediaApp() {
                 </div>
               </div>
 
-              <div className="max-h-56 overflow-y-auto space-y-2 pr-1">
-                {filteredFileList.map((item) => (
-                  <div
+              <div className="space-y-3">
+                {paginatedFileList.map((item) => (
+                  <FileItemCard
                     key={item.id}
-                    className={`p-3 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-semibold ${
-                      isDarkMode ? 'bg-slate-900/60 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-800 shadow-sm'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 truncate w-full sm:max-w-xs">
-                      <span className="text-sm cursor-default select-none">
-                        {item.status === 'completed' ? '✅' : item.status === 'converting' ? '🟢' : item.status === 'paused' ? '🟠' : '⏳'}
-                      </span>
-                      <div className="truncate w-full space-y-0.5">
-                        {editingId === item.id ? (
-                          <div className="flex items-center gap-1.5">
-                            <input
-                              type="text"
-                              value={tempName}
-                              onChange={(e) => setTempName(e.target.value)}
-                              className={`px-2 py-0.5 rounded text-xs border font-bold w-full ${isDarkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-sky-400 text-slate-900'}`}
-                              autoFocus
-                            />
-                            <button
-                              onClick={() => {
-                                if (tempName.trim()) queueManager.updateFileName(item.id, tempName.trim());
-                                setEditingId(null);
-                              }}
-                              className="px-2 py-0.5 bg-emerald-600 text-white rounded text-[10px] font-bold"
-                            >
-                              ✓
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 truncate">
-                            <p className="truncate font-bold" title={item.customName}>
-                              {item.customName}.{targetFormat}
-                            </p>
-                            {item.status !== 'completed' && item.status !== 'converting' && (
-                              <button
-                                onClick={() => {
-                                  setEditingId(item.id);
-                                  setTempName(item.customName);
-                                }}
-                                className="text-slate-400 hover:text-sky-500 text-xs cursor-pointer flex-shrink-0"
-                                title="Edit filename"
-                              >
-                                ✏️
-                              </button>
-                            )}
-                          </div>
-                        )}
-                        <div className="flex items-center gap-3 text-[10px] text-slate-400">
-                          <span>Original: {formatFileSize(item.file.size)}</span>
-                          <span className="text-sky-500 font-bold">Est. Size: {calculateEstimatedSize(item.file.size)}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2.5 self-end sm:self-center">
-                      {item.status === 'converting' && (
-                        <span className="text-sky-400 font-bold">{item.progress}%</span>
-                      )}
-                      {item.status === 'paused' && (
-                        <span className="text-amber-500 font-bold">Paused ({item.progress}%)</span>
-                      )}
-                      {item.status === 'completed' && item.downloadUrl && (
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => setPreviewItem({ url: item.downloadUrl!, name: `${item.customName}.${targetFormat}`, type: activeTab })}
-                            className="px-2.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
-                            title="Preview Converted File"
-                          >
-                            👁️ {isRtl ? 'معاينة' : 'Preview'}
-                          </button>
-
-                          <a
-                            href={item.downloadUrl}
-                            download={`${item.customName}.${targetFormat}`}
-                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[11px] font-bold shadow-sm transition-colors"
-                          >
-                            {t.download}
-                          </a>
-                        </div>
-                      )}
-                      {item.status === 'error' && (
-                        <span className="text-rose-500 font-bold">Error</span>
-                      )}
-
-                      {(item.status === 'idle' || item.status === 'paused') && (
-                        <button
-                          onClick={() => {
-                            const quality = compressionLevel === 'high' ? 0.70 : compressionLevel === 'low' ? 0.95 : 0.85;
-                            const crf = compressionLevel === 'high' ? 28 : compressionLevel === 'low' ? 18 : 23;
-                            queueManager.startSingleFile(item.id, activeTab, targetFormat, { resolution: videoResolution, crf, quality });
-                          }}
-                          className="text-sky-500 hover:text-sky-600 text-xs font-bold px-1.5 transition-colors cursor-pointer"
-                          title="Start this file only"
-                        >
-                          ▶
-                        </button>
-                      )}
-
-                      {item.status === 'converting' && (
-                        <button
-                          onClick={() => queueManager.pauseFile(item.id)}
-                          className="text-amber-500 hover:text-amber-600 text-xs font-bold px-1.5 transition-colors cursor-pointer"
-                          title="Pause"
-                        >
-                          ⏸
-                        </button>
-                      )}
-
-                      {item.status !== 'completed' && (
-                        <button
-                          onClick={() => queueManager.removeFile(item.id)}
-                          className="text-slate-400 hover:text-rose-500 text-sm font-bold px-1 transition-colors cursor-pointer"
-                          title="Cancel"
-                        >
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                    item={item}
+                    isDarkMode={isDarkMode}
+                    isRtl={isRtl}
+                    onStartSingle={(id) => queueManager.startSingleFile(id, activeTab)}
+                    onPauseSingle={(id) => queueManager.pauseFile(id)}
+                    onRemove={(id) => queueManager.removeFile(id)}
+                    onResetItem={handleResetItem}
+                    onUpdateFormat={(id, fmt) => queueManager.updateFileFormat(id, fmt)}
+                    onUpdateName={(id, name) => queueManager.updateFileName(id, name)}
+                    onPreview={(url, name, type) => setPreviewItem({ url, name, type: type as any })}
+                    onOpenOptions={() => setActiveOptionsItem(item)}
+                    extractedAudioUrl={extractedAudioUrls[item.id] || null}
+                    onExtractAudio={async () => {
+                      try {
+                        showToast(isRtl ? '🎧 جاري استخراج الصوت...' : '🎧 Extracting audio...');
+                        const audioBlob = await extractAudioFromVideo(item.file);
+                        const url = URL.createObjectURL(audioBlob);
+                        
+                        setExtractedAudioUrls(prev => ({ ...prev, [item.id]: url }));
+                        showToast(isRtl ? '✨ تم استخراج الصوت بنجاح!' : '✨ Audio extracted successfully!');
+                      } catch (e) {
+                        showToast(isRtl ? '❌ فشل استخراج الصوت' : '❌ Audio extraction failed');
+                      }
+                    }}
+                    formatFileSize={formatFileSize}
+                    hasMultipleFiles={filteredFileList.length > 1}
+                  />
                 ))}
               </div>
 
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-4 px-2">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 disabled:opacity-40 cursor-pointer"
+                  >
+                    {isRtl ? 'السابق' : 'Previous'}
+                  </button>
+                  <span className="text-xs font-bold text-slate-500">
+                    {isRtl
+                      ? `صفحة ${currentPage} من أصل ${totalPages}`
+                      : `Page ${currentPage} of ${totalPages}`}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 disabled:opacity-40 cursor-pointer"
+                  >
+                    {isRtl ? 'التالي' : 'Next'}
+                  </button>
+                </div>
+              )}
+
               {completedCount > 0 && (
-                <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex flex-wrap gap-2">
+                <div className="pt-2 flex flex-wrap gap-3">
                   <button
                     onClick={handleDownloadAsZip}
-                    className="flex-1 py-2 px-3 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                    disabled={isZipLoading}
+                    className={`flex-1 min-w-[260px] py-3.5 px-4 rounded-2xl text-xs font-black transition-all shadow-lg flex items-center justify-center gap-3 cursor-pointer disabled:opacity-60 ${
+                      isDarkMode
+                        ? 'bg-sky-600 hover:bg-sky-500 text-white shadow-sky-950/50'
+                        : 'bg-sky-600 hover:bg-sky-700 text-white shadow-sky-500/30'
+                    }`}
                   >
-                    📦 {isRtl ? `تحميل الكل كمجلد (ZIP) (${completedCount})` : `Download All as Folder (ZIP) (${completedCount})`}
+                    <span className="text-lg">🗂️</span>
+                    <div className="flex flex-col items-start leading-tight">
+                      <span className="text-white font-black">
+                        {isZipLoading 
+                          ? (isRtl ? '⏳ جاري ضغط الملفات...' : '⏳ Packaging ZIP...') 
+                          : (isRtl ? `تحميل الكل كمجلد ZIP (${completedCount})` : `Download All as Folder (ZIP) (${completedCount})`)}
+                      </span>
+                      <span className="text-[10px] text-sky-100 font-bold opacity-90">
+                        {isRtl ? `الحجم الكلي التقريبي: ${totalFormattedSize}` : `Est. Total Size: ${totalFormattedSize}`}
+                      </span>
+                    </div>
                   </button>
+
                   <button
                     onClick={handleDownloadAllSeparately}
-                    className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                    className={`flex-1 min-w-[260px] py-3.5 px-4 rounded-2xl text-xs font-black transition-all shadow-lg flex items-center justify-center gap-3 cursor-pointer ${
+                      isDarkMode
+                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-950/50'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/30'
+                    }`}
                   >
-                    📥 {isRtl ? `تحميل الكل بشكل منفصل (${completedCount})` : `Download All Separately (${completedCount})`}
+                    <span className="text-lg">📥</span>
+                    <div className="flex flex-col items-start leading-tight">
+                      <span className="text-white font-black">
+                        {isRtl ? `تحميل الكل منفصل (${completedCount})` : `Download All Separately (${completedCount})`}
+                      </span>
+                      <span className="text-[10px] text-emerald-100 font-bold opacity-90">
+                        {isRtl ? `العدد الإجمالي: ${completedCount} ملف` : `Total Count: ${completedCount} files`}
+                      </span>
+                    </div>
                   </button>
                 </div>
               )}
             </div>
           )}
-
-          {/* خيارات التحكم مع فقاعة التنبيه التفاعلية عند اختيار الـ Preset */}
-          <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 p-4 rounded-2xl border ${isDarkMode ? 'bg-slate-950/40 border-slate-700' : 'bg-slate-50/80 border-slate-200'}`}>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-slate-400">{t.targetFormat || 'Target Format'}</label>
-              <select
-                value={targetFormat}
-                onChange={(e) => handleFormatChange(e.target.value)}
-                className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer hover:bg-sky-500/10 focus:outline-none ${
-                  isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'
-                }`}
-              >
-                {activeTab === 'image' && (
-                  <>
-                    <option value="webp">WEBP (Modern & Fast)</option>
-                    <option value="png">PNG (Lossless)</option>
-                    <option value="jpeg">JPEG (Standard Photo)</option>
-                    <option value="jpg">JPG</option>
-                    <option value="avif">AVIF (Ultra Compressed)</option>
-                    <option value="gif">GIF (Animated)</option>
-                    <option value="bmp">BMP (Bitmap Image)</option>
-                    <option value="ico">ICO (Favicon & Icon)</option>
-                  </>
-                )}
-                {activeTab === 'audio' && (
-                  <>
-                    <option value="mp3">MP3 (Universal Audio)</option>
-                    <option value="wav">WAV (Lossless Studio)</option>
-                    <option value="ogg">OGG (Open Web Audio)</option>
-                    <option value="aac">AAC (Advanced Audio)</option>
-                    <option value="m4a">M4A (Apple Audio)</option>
-                    <option value="flac">FLAC (High Fidelity Lossless)</option>
-                  </>
-                )}
-                {activeTab === 'video' && (
-                  <>
-                    <option value="mp4">MP4 (Universal Video)</option>
-                    <option value="webm">WEBM (Web Optimized)</option>
-                    <option value="mov">MOV (Apple QuickTime)</option>
-                    <option value="avi">AVI (Classic Windows)</option>
-                    <option value="mkv">MKV (Matroska High Quality)</option>
-                    <option value="flv">Flash Video</option>
-                    <option value="3gp">3GP (Mobile Format)</option>
-                    <option value="m4v">M4V (iTunes Video)</option>
-                    <option value="ts">TS (MPEG Transport Stream)</option>
-                  </>
-                )}
-              </select>
-            </div>
-
-            {activeTab === 'video' ? (
-              <>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-bold text-slate-400">{t.videoPreset || 'Platform Preset'}</label>
-                  <select
-                    value={videoPreset}
-                    onChange={(e) => handlePresetChange(e.target.value)}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer hover:bg-sky-500/10 focus:outline-none ${
-                      isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'
-                    }`}
-                  >
-                    <option value="custom">{t.presetCustom || 'Custom Settings'}</option>
-                    <option value="discord">🎮 {t.presetDiscord || 'Discord (< 8MB)'}</option>
-                    <option value="whatsapp">💬 {t.presetWhatsapp || 'WhatsApp'}</option>
-                    <option value="youtube">▶️ {t.presetYoutube || 'YouTube (1080p)'}</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-1 relative">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-400">{t.videoResolution || 'Video Resolution'}</label>
-                    {videoPreset !== 'custom' && (
-                      <span className="absolute -top-7 right-0 z-10 bg-sky-600 text-white text-[10px] px-2.5 py-1 rounded-xl shadow-lg animate-pulse font-bold whitespace-nowrap">
-                        {isRtl ? '💡 يمكنك التعديل بحرية دون تجاوز الحجم!' : '💡 Adjustable! Watch file size.'}
-                      </span>
-                    )}
-                  </div>
-                  <select
-                    value={videoResolution}
-                    onChange={(e) => {
-                      setVideoResolution(e.target.value);
-                      setVideoPreset('custom');
-                    }}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer hover:bg-sky-500/10 focus:outline-none ${
-                      isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'
-                    }`}
-                  >
-                    <option value="original">Original (Keep Source)</option>
-                    <option value="4k">4K (Ultra HD - 2160p)</option>
-                    <option value="2k">2K (QHD - 1440p)</option>
-                    <option value="1080">Full HD (1080p)</option>
-                    <option value="720">HD (720p)</option>
-                    <option value="480">SD (480p)</option>
-                  </select>
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold text-slate-400">{t.compression || 'Compression Level'}</label>
-                <select
-                  value={compressionLevel}
-                  onChange={(e) => handleCompressionChange(e.target.value)}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer hover:bg-sky-500/10 focus:outline-none ${
-                    isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'
-                  }`}
-                >
-                  <option value="low">{t.compLow}</option>
-                  <option value="medium">{t.compMedium}</option>
-                  <option value="high">{t.compHigh}</option>
-                </select>
-              </div>
-            )}
-          </div>
-
-          <div className={`p-3.5 rounded-2xl border text-xs leading-relaxed font-medium flex items-center gap-3 ${
-            isDarkMode ? 'bg-sky-950/20 border-sky-900/40 text-sky-300' : 'bg-sky-50/70 border-sky-100 text-sky-800'
-          }`}>
-            <span className="text-base">💡</span>
-            <div>
-              <span className="font-bold uppercase tracking-wider mr-1">{targetFormat}:</span>
-              <span>{getFormatDescription()}</span>
-            </div>
-          </div>
 
           <button
             onClick={startConversion}
@@ -691,7 +562,7 @@ export default function IMediaApp() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 flex-shrink-0">
           {(t.features || baseTranslations.en.features).map((feat: any, idx: number) => {
             const icons = [
               '/images/offline.png',
@@ -704,10 +575,10 @@ export default function IMediaApp() {
             return (
               <div 
                 key={idx} 
-                className={`relative group p-6 rounded-[2.55rem] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(56,189,248,0.12)] flex flex-col justify-between ${
+                className={`relative group p-6 rounded-[2.55rem] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl flex flex-col justify-between ${
                   isDarkMode 
-                    ? 'bg-slate-900/90 border border-sky-400/25 shadow-[0_4px_25px_rgba(56,189,248,0.06)] text-slate-100 backdrop-blur-xl' 
-                    : 'bg-gradient-to-b from-[#EBF3FC]/90 to-[#E1EEFB]/90 border border-white/90 shadow-[0_8px_30px_rgb(0,0,0,0.04)] text-slate-800 backdrop-blur-md'
+                    ? 'bg-slate-900/90 border border-sky-400/25 shadow-lg text-slate-100 backdrop-blur-xl' 
+                    : 'bg-gradient-to-b from-[#EBF3FC]/90 to-[#E1EEFB]/90 border border-white/90 shadow-md text-slate-800 backdrop-blur-md'
                 }`}
               >
                 <div className="flex items-center gap-3 mb-4 w-full h-16">
@@ -715,7 +586,7 @@ export default function IMediaApp() {
                     <img 
                       src={icons[idx]} 
                       alt={feat.title}
-                      className={`w-full h-full object-contain ${imageClasses[idx]} drop-shadow-[0_8px_20px_rgba(56,189,248,0.35)] transition-transform duration-300`}
+                      className={`w-full h-full object-contain ${imageClasses[idx]} drop-shadow-md transition-transform duration-300`}
                     />
                   </div>
 
@@ -749,7 +620,6 @@ export default function IMediaApp() {
       </main>
 
       <SuggestionBox isDarkMode={isDarkMode} isRtl={isRtl} t={t} />
-
       <CookieBanner isDarkMode={isDarkMode} isRtl={isRtl} t={t} />
 
       <Footer
@@ -779,6 +649,21 @@ export default function IMediaApp() {
           mediaName={previewItem.name}
           mediaType={previewItem.type}
           isDarkMode={isDarkMode}
+        />
+      )}
+
+      {activeOptionsItem && (
+        <FileOptionsModal
+          isOpen={!!activeOptionsItem}
+          onClose={() => setActiveOptionsItem(null)}
+          item={activeOptionsItem}
+          onSave={(opts, applyAll) => {
+            queueManager.updateFileOptions(activeOptionsItem.id, opts, applyAll);
+            setActiveOptionsItem(null);
+          }}
+          isDarkMode={isDarkMode}
+          isRtl={isRtl}
+          hasMultipleFiles={filteredFileList.length > 1}
         />
       )}
     </div>

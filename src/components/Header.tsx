@@ -42,7 +42,12 @@ export const Header: React.FC<HeaderProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) && buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -62,32 +67,60 @@ export const Header: React.FC<HeaderProps> = ({
         zIndex: 9999,
       }}
       className={`border-b backdrop-blur-xl flex items-center transition-colors shadow-sm ${
-        isDarkMode 
-          ? 'bg-slate-950/80 border-slate-800/80 text-white' 
+        isDarkMode
+          ? 'bg-slate-950/80 border-slate-800/80 text-white'
           : 'bg-white/80 border-sky-100/60 text-slate-900'
       }`}
     >
       <div className="w-full px-6 flex items-center justify-between">
-        
-        <div 
+        {/* شعار iMedia بالأزرق السماوي الهادئ والأنيق */}
+        <div
           onClick={() => window.location.reload()}
-          className="flex items-center gap-3.5 group cursor-pointer"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '14px',
+            cursor: 'pointer',
+            userSelect: 'none',
+          }}
+          className="group"
           title="Reload application"
         >
-          <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-tr from-sky-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 text-xl font-bold transition-transform group-hover:scale-105">
+          <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-tr from-sky-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 text-xl font-bold transition-transform duration-300 group-hover:scale-105 group-hover:rotate-3">
             <span className="absolute inset-0 rounded-2xl bg-white/20 animate-pulse"></span>
             🛡️
           </div>
-          <div className="flex flex-col">
-            <span className={`text-2xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-              i<span className="text-sky-500">Media</span>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {/* حرف الـ i باللون الأسود الداكن الأنيق مع ميلان عصري */}
+            <span
+              style={{
+                fontSize: '24px',
+                fontWeight: 900,
+                fontStyle: 'italic',
+                transform: 'rotate(-6deg)',
+                color: isDarkMode ? '#f8fafc' : '#0f172a',
+              }}
+            >
+              i
             </span>
-            <span className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase opacity-80">
-              {t.privacySub || '100% Client-Side Privacy'}
+
+            {/* كلمة Media باللون الأزرق السماوي الهادئ والمريح للعين */}
+            <span
+              style={{
+                fontSize: '24px',
+                fontWeight: 900,
+                fontStyle: 'italic',
+                transform: 'skewX(-4deg)',
+                color: isDarkMode ? '#38bdf8' : '#0284c7', // أزرق سماوي ناعم ومناسب جداً للثيم
+              }}
+            >
+              Media
             </span>
           </div>
         </div>
 
+        {/* عناصر التحكم (اللغة والوضع الليلي) */}
         <div className="flex items-center gap-3" dir="ltr">
           <div className="relative">
             <button
@@ -105,10 +138,12 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             {isOpen && (
-              <div 
+              <div
                 ref={dropdownRef}
                 className={`w-44 rounded-2xl shadow-2xl border backdrop-blur-2xl overflow-hidden py-1.5 max-h-80 overflow-y-auto ${
-                  isDarkMode ? 'bg-slate-950/95 border-slate-800 text-white' : 'bg-white/95 border-sky-100 text-slate-900'
+                  isDarkMode
+                    ? 'bg-slate-950/95 border-slate-800 text-white'
+                    : 'bg-white/95 border-sky-100 text-slate-900'
                 }`}
                 style={dropdownStyle}
               >
@@ -126,20 +161,26 @@ export const Header: React.FC<HeaderProps> = ({
                       onMouseEnter={() => setHoveredIndex(l.code)}
                       onMouseLeave={() => setHoveredIndex(null)}
                       style={{
-                        backgroundColor: isSelected 
-                          ? '#0ea5e9' 
-                          : isHovered 
-                            ? (isDarkMode ? '#1e293b' : '#e0f2fe') 
-                            : 'transparent',
-                        color: isSelected 
-                          ? '#ffffff' 
-                          : isHovered 
-                            ? (isDarkMode ? '#ffffff' : '#0f172a') 
-                            : (isDarkMode ? '#e2e8f0' : '#1e293b'),
+                        backgroundColor: isSelected
+                          ? '#0ea5e9'
+                          : isHovered
+                          ? isDarkMode
+                            ? '#1e293b'
+                            : '#e0f2fe'
+                          : 'transparent',
+                        color: isSelected
+                          ? '#ffffff'
+                          : isHovered
+                          ? isDarkMode
+                            ? '#ffffff'
+                            : '#0f172a'
+                          : isDarkMode
+                          ? '#e2e8f0'
+                          : '#1e293b',
                         paddingLeft: isHovered ? '20px' : '16px',
                         transition: 'all 0.15s ease-in-out',
                       }}
-                      className={`w-full text-left px-4 py-3 text-xs font-bold flex items-center justify-center cursor-pointer`}
+                      className={`w-full text-left px-4 py-3 text-xs font-bold flex items-center justify-between cursor-pointer`}
                     >
                       <span>{l.name}</span>
                       {isSelected && <span>✓</span>}
@@ -162,7 +203,6 @@ export const Header: React.FC<HeaderProps> = ({
             {isDarkMode ? '☀️' : '🌙'}
           </button>
         </div>
-
       </div>
     </header>
   );
