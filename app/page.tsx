@@ -248,7 +248,8 @@ export default function IMediaApp() {
         t={t}
       />
 
-      <main className="max-w-6xl mx-auto px-4 pt-32 pb-24 w-full flex-grow flex flex-col gap-8">
+      {/* رفع الهامش السفلي لـ pb-28 ليناسب الفوتر التفاعلي الثابت أسفل الهاتف */}
+      <main className="max-w-6xl mx-auto px-4 pt-32 pb-28 md:pb-24 w-full flex-grow flex flex-col gap-8">
         
         <WasmChecker isDarkMode={isDarkMode} isRtl={isRtl} />
 

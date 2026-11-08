@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 
 interface TermsModalProps {
   isOpen: boolean;
@@ -31,13 +31,11 @@ export const TermsModal: React.FC<TermsModalProps> = ({
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden'; // منع التمرير في الخلفية
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
 
@@ -47,33 +45,43 @@ export const TermsModal: React.FC<TermsModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      style={{
+        position: 'fixed',
+        bottom: '50px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 99999,
+        width: '92%',
+        maxWidth: '550px',
+      }}
+      className="animate-in fade-in slide-in-from-bottom-5 duration-200"
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       <div 
         ref={modalRef}
-        className={`w-full max-w-lg rounded-3xl p-6 shadow-2xl border transition-all transform scale-100 ${
+        className={`w-full rounded-3xl p-5 shadow-2xl border transition-all ${
           isDarkMode 
-            ? 'bg-slate-900 border-slate-700 text-slate-100 shadow-black/80' 
-            : 'bg-white border-sky-100 text-slate-900 shadow-sky-900/10'
+            ? 'bg-slate-900/95 border-slate-700 text-slate-100 shadow-black/90 backdrop-blur-xl' 
+            : 'bg-white/95 border-sky-200 text-slate-900 shadow-sky-900/20 backdrop-blur-xl'
         }`}
       >
-        <div className="flex justify-between items-center pb-4 border-b border-slate-500/15">
-          <h3 className="text-sm font-black text-sky-600 dark:text-sky-400 flex items-center gap-2.5">
-            <span className="text-lg">📜</span> 
+        <div className="flex justify-between items-center pb-3 border-b border-slate-500/15">
+          {/* تم إزالة الـ font-black وجعله عادياً */}
+          <h3 className="text-sm font-medium text-sky-600 dark:text-sky-400 flex items-center gap-2">
+            <span className="text-base">📜</span> 
             <span>{isRtl ? 'شروط الاستخدام والخصوصية' : 'Terms & Privacy'}</span>
           </h3>
           <button 
             onClick={onClose}
-            className="w-7 h-7 rounded-full bg-slate-500/10 hover:bg-rose-500/20 hover:text-rose-500 flex items-center justify-center text-slate-400 font-bold text-xs transition-colors cursor-pointer"
+            className="w-6 h-6 rounded-full bg-slate-500/10 hover:bg-rose-500/20 hover:text-rose-500 flex items-center justify-center text-slate-400 font-bold text-xs transition-colors cursor-pointer"
             aria-label="Close modal"
           >
             ✕
           </button>
         </div>
 
-        <div className="py-4 max-h-[60vh] overflow-y-auto space-y-3.5 text-xs leading-relaxed custom-scrollbar">
-          <div className={`p-4 rounded-2xl border space-y-2 ${isDarkMode ? 'bg-slate-800/60 border-slate-700/80' : 'bg-slate-50 border-slate-200/80'}`}>
+        <div className="py-3 max-h-[40vh] overflow-y-auto space-y-3 text-xs leading-relaxed custom-scrollbar">
+          <div className={`p-3.5 rounded-2xl border space-y-1.5 ${isDarkMode ? 'bg-slate-800/60 border-slate-700/80' : 'bg-slate-50 border-slate-200/80'}`}>
             <h4 className="font-bold text-sky-600 dark:text-sky-400 text-xs">
               {isRtl ? '1. سياسة الخصوصية (Privacy First)' : '1. Privacy Policy'}
             </h4>
@@ -84,7 +92,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({
             </p>
           </div>
 
-          <div className={`p-4 rounded-2xl border space-y-2 ${isDarkMode ? 'bg-slate-800/60 border-slate-700/80' : 'bg-slate-50 border-slate-200/80'}`}>
+          <div className={`p-3.5 rounded-2xl border space-y-1.5 ${isDarkMode ? 'bg-slate-800/60 border-slate-700/80' : 'bg-slate-50 border-slate-200/80'}`}>
             <h4 className="font-bold text-sky-600 dark:text-sky-400 text-xs">
               {isRtl ? '2. إخلاء المسؤولية وشروط الاستخدام' : '2. Terms of Use & Disclaimer'}
             </h4>
@@ -96,10 +104,10 @@ export const TermsModal: React.FC<TermsModalProps> = ({
           </div>
         </div>
 
-        <div className="pt-4 border-t border-slate-500/15 flex justify-end">
+        <div className="pt-3 border-t border-slate-500/15 flex justify-end">
           <button
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-black text-xs transition-all shadow-md shadow-sky-500/25 cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-black text-xs transition-all shadow-md shadow-sky-500/25 cursor-pointer"
           >
             {isRtl ? 'فهمت وموافق' : 'Got it'}
           </button>
