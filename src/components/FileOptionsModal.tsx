@@ -144,7 +144,7 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-[999999] pointer-events-none flex items-center justify-center p-4 overflow-hidden"
+      className="fixed inset-0 z-[999999] pointer-events-none flex items-center justify-center p-3 sm:p-4 overflow-hidden"
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onTouchMove={handleMouseMove}
@@ -152,29 +152,32 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
     >
       <div
         dir={isRtl ? 'rtl' : 'ltr'}
-        style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
-        className={`pointer-events-auto w-full max-w-xl max-h-[85vh] overflow-y-auto p-5 rounded-3xl shadow-2xl border space-y-4 relative select-none z-[1000000] transition-shadow duration-200 ${
+        style={{ 
+          transform: `translate(${position.x}px, ${position.y}px)`,
+          width: window.innerWidth < 640 ? '80vw' : '36rem'
+        }}
+        className={`pointer-events-auto max-h-[75vh] sm:max-h-[85vh] overflow-y-auto p-2.5 sm:p-5 rounded-2xl sm:rounded-3xl shadow-2xl border space-y-2.5 sm:space-y-4 relative select-none z-[1000000] transition-shadow duration-200 ${
           isDragging ? 'shadow-sky-500/20 ring-2 ring-sky-500/50 cursor-grabbing' : ''
         } ${
-          // تم تخفيف درجة الشفافية بنسبة 60% (استخدام خلفيات أكثر كثافة وحجباً للرؤية الخلفية)
+          // خلفية صلبة ومعتمة 100% بدون أي شفافية أو رؤية لما خلف الصندوق
           isDarkMode 
-            ? 'bg-[#090d16]/98 border-slate-700 text-slate-100 shadow-black backdrop-blur-md' 
-            : 'bg-white/98 border-slate-200 text-slate-800 shadow-2xl backdrop-blur-md'
+            ? 'bg-slate-950 border-slate-700 text-slate-100 shadow-black' 
+            : 'bg-white border-slate-200 text-slate-800 shadow-2xl'
         }`}
       >
-        {/* شريط العنوان العلوي (مقبض السحب المطابق تماماً) */}
+        {/* شريط العنوان العلوي (مقبض السحب) */}
         <div 
           onMouseDown={handleMouseDown}
           onTouchStart={handleMouseDown}
-          className={`flex items-center justify-between border-b pb-2.5 px-3 py-2 rounded-xl transition-colors cursor-move ${
-            isDarkMode ? 'border-slate-800 bg-slate-800/80 hover:bg-slate-800' : 'border-slate-200 bg-slate-100 hover:bg-slate-200'
+          className={`flex items-center justify-between border-b pb-1.5 sm:pb-2.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl transition-colors cursor-move ${
+            isDarkMode ? 'border-slate-800 bg-slate-900 hover:bg-slate-800' : 'border-slate-200 bg-slate-100 hover:bg-slate-200'
           }`}
           title="اسحب من هنا لتغيير مكان الصندوق"
         >
-          <div className="flex items-center gap-2 pointer-events-none">
-            <span className="text-sky-400 font-bold">⠿</span>
-            <h3 className="font-black text-sm">
-              ⚙️ Options <span className="text-sky-400 text-xs font-normal">({item.customName})</span>
+          <div className="flex items-center gap-1.5 pointer-events-none">
+            <span className="text-sky-400 font-bold text-xs sm:text-base">⠿</span>
+            <h3 className="font-black text-[11px] sm:text-sm">
+              ⚙️ Options <span className="text-sky-400 text-[9px] sm:text-xs font-normal">({item.customName})</span>
             </h3>
           </div>
           <button 
@@ -182,31 +185,31 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
               e.stopPropagation();
               onClose();
             }} 
-            className="text-slate-400 hover:text-rose-500 font-bold text-base cursor-pointer px-2"
+            className="text-slate-400 hover:text-rose-500 font-bold text-xs sm:text-base cursor-pointer px-1.5"
           >
             ✕
           </button>
         </div>
 
-        <div className="space-y-4 text-xs font-bold px-1">
+        <div className="space-y-2 sm:space-y-4 text-[10px] sm:text-xs font-bold px-0.5 sm:px-1">
           {/* قسم إعدادات الصور (Image Settings) */}
           {isImage && (
-            <div className={`p-3.5 rounded-2xl border space-y-3 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-              <div className="text-xs font-black text-sky-400">
+            <div className={`p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border space-y-2 sm:space-y-3 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+              <div className="text-[10px] sm:text-xs font-black text-sky-400">
                 <span>🖼️ Image Settings</span>
               </div>
 
               {/* التحكم في الجودة */}
-              <div className={`space-y-2 p-3 rounded-xl border ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
+              <div className={`space-y-1.5 sm:space-y-2 p-2 sm:p-3 rounded-lg sm:rounded-xl border ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
                 <div className="flex items-center justify-between">
-                  <label className="text-slate-300 text-[11px]">Image Quality: {imageQuality}%</label>
+                  <label className="text-slate-300 text-[10px] sm:text-[11px]">Image Quality: {imageQuality}%</label>
                   <input
                     type="number"
                     min="1"
                     max="100"
                     value={imageQuality}
                     onChange={(e) => setImageQuality(Math.min(100, Math.max(1, Number(e.target.value))))}
-                    className={`w-14 px-2 py-0.5 rounded text-xs text-center font-bold border ${inputThemeClass}`}
+                    className={`w-12 sm:w-14 px-1.5 py-0.5 rounded text-[10px] sm:text-xs text-center font-bold border ${inputThemeClass}`}
                   />
                 </div>
 
@@ -216,7 +219,7 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
                   max="100"
                   value={imageQuality}
                   onChange={(e) => setImageQuality(Number(e.target.value))}
-                  className="w-full accent-sky-500 cursor-pointer h-1.5 bg-slate-700 rounded-lg"
+                  className="w-full accent-sky-500 cursor-pointer h-1 bg-slate-700 rounded-lg"
                 />
 
                 <div className="flex flex-wrap gap-1 pt-0.5">
@@ -232,7 +235,7 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
                         key={btn.label}
                         type="button"
                         onClick={() => setImageQuality(btn.val)}
-                        className={`px-2 py-1 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold transition-all cursor-pointer ${
                           isActive
                             ? 'bg-sky-500 text-white shadow-[0_0_10px_rgba(56,189,248,0.6)] scale-105 border border-sky-300'
                             : isDarkMode
@@ -246,18 +249,18 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
                   })}
                 </div>
 
-                <p className="text-[10px] text-slate-400 leading-relaxed font-normal pt-1">
+                <p className="text-[9px] sm:text-[10px] text-slate-400 leading-relaxed font-normal pt-1">
                   Adjust output image quality percentage (1-100%). Higher values retain more details while lower values reduce file size significantly.
                 </p>
               </div>
 
               {/* قائمة الدقة والأبعاد */}
               <div className="space-y-1">
-                <label className="text-slate-400 text-[11px]">Resolution</label>
+                <label className="text-slate-400 text-[10px] sm:text-[11px]">Resolution</label>
                 <select
                   value={resolution}
                   onChange={(e) => setResolution(e.target.value)}
-                  className={`w-full px-3 py-2 rounded-xl border font-bold cursor-pointer text-xs ${inputThemeClass}`}
+                  className={`w-full px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border font-bold cursor-pointer text-[10px] sm:text-xs ${inputThemeClass}`}
                 >
                   <option value="no change" className={isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>no change (Keep current)</option>
                   <option value="640x480" className={isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>640x480 (SD)</option>
@@ -269,25 +272,25 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
                 </select>
 
                 {resolution === 'custom' && (
-                  <div className="grid grid-cols-2 gap-2 pt-1.5">
+                  <div className="grid grid-cols-2 gap-1.5 pt-1">
                     <div>
-                      <label className="text-[10px] text-slate-400">Width (العرض)</label>
+                      <label className="text-[9px] sm:text-[10px] text-slate-400">Width (العرض)</label>
                       <input
                         type="number"
                         value={customWidth}
                         onChange={(e) => setCustomWidth(e.target.value)}
                         placeholder="1920"
-                        className={`w-full px-3 py-1.5 rounded-xl border text-xs font-bold ${inputThemeClass}`}
+                        className={`w-full px-2 py-1 rounded-lg border text-[10px] sm:text-xs font-bold ${inputThemeClass}`}
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-400">Height (الارتفاع)</label>
+                      <label className="text-[9px] sm:text-[10px] text-slate-400">Height (الارتفاع)</label>
                       <input
                         type="number"
                         value={customHeight}
                         onChange={(e) => setCustomHeight(e.target.value)}
                         placeholder="1080"
-                        className={`w-full px-3 py-1.5 rounded-xl border text-xs font-bold ${inputThemeClass}`}
+                        className={`w-full px-2 py-1 rounded-lg border text-[10px] sm:text-xs font-bold ${inputThemeClass}`}
                       />
                     </div>
                   </div>
@@ -298,17 +301,17 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
 
           {/* قسم إعدادات الفيديو (Video Settings) */}
           {isVideo && (
-            <div className={`p-3.5 rounded-2xl border space-y-3 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-              <div className="text-xs font-black text-sky-400">
+            <div className={`p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border space-y-2 sm:space-y-3 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+              <div className="text-[10px] sm:text-xs font-black text-sky-400">
                 <span>📹 Video Settings</span>
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-400 text-[11px]">Video Codec</label>
+                <label className="text-slate-400 text-[10px] sm:text-[11px]">Video Codec</label>
                 <select
                   value={videoCodec}
                   onChange={(e) => setVideoCodec(e.target.value)}
-                  className={`w-full px-3 py-2 rounded-xl border font-bold cursor-pointer text-xs ${inputThemeClass}`}
+                  className={`w-full px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border font-bold cursor-pointer text-[10px] sm:text-xs ${inputThemeClass}`}
                 >
                   <option value="libx264" className={isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>H.264 (x264)</option>
                   <option value="libx265" className={isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>H.265 / HEVC (x265)</option>
@@ -317,16 +320,16 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
                 </select>
               </div>
 
-              <div className={`space-y-2 p-3 rounded-xl border ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
+              <div className={`space-y-1.5 sm:space-y-2 p-2 sm:p-3 rounded-lg sm:rounded-xl border ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
                 <div className="flex items-center justify-between">
-                  <label className="text-slate-300 text-[11px]">Constant Quality (CRF): {crf}</label>
+                  <label className="text-slate-300 text-[10px] sm:text-[11px]">Constant Quality (CRF): {crf}</label>
                   <input
                     type="number"
                     min="0"
                     max="51"
                     value={crf}
                     onChange={(e) => setCrf(Number(e.target.value))}
-                    className={`w-14 px-2 py-0.5 rounded text-xs text-center font-bold border ${inputThemeClass}`}
+                    className={`w-12 sm:w-14 px-1.5 py-0.5 rounded text-[10px] sm:text-xs text-center font-bold border ${inputThemeClass}`}
                   />
                 </div>
 
@@ -336,7 +339,7 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
                   max="51"
                   value={crf}
                   onChange={(e) => setCrf(Number(e.target.value))}
-                  className="w-full accent-sky-500 cursor-pointer h-1.5 bg-slate-700 rounded-lg"
+                  className="w-full accent-sky-500 cursor-pointer h-1 bg-slate-700 rounded-lg"
                 />
 
                 <div className="flex flex-wrap gap-1 pt-0.5">
@@ -353,7 +356,7 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
                         key={btn.label}
                         type="button"
                         onClick={() => setCrf(btn.val)}
-                        className={`px-2 py-1 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold transition-all cursor-pointer ${
                           isActive
                             ? 'bg-sky-500 text-white shadow-[0_0_10px_rgba(56,189,248,0.6)] scale-105 border border-sky-300'
                             : isDarkMode
@@ -367,17 +370,17 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
                   })}
                 </div>
 
-                <p className="text-[10px] text-slate-400 leading-relaxed font-normal pt-1">
+                <p className="text-[9px] sm:text-[10px] text-slate-400 leading-relaxed font-normal pt-1">
                   The Constant Rate Factor (CRF) sets the quality of the video. The range of the CRF scale is 0–51, where 0 is lossless, 23 is default, and 51 is worst quality possible.
                 </p>
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-400 text-[11px]">Resolution</label>
+                <label className="text-slate-400 text-[10px] sm:text-[11px]">Resolution</label>
                 <select
                   value={resolution}
                   onChange={(e) => setResolution(e.target.value)}
-                  className={`w-full px-3 py-2 rounded-xl border font-bold cursor-pointer text-xs ${inputThemeClass}`}
+                  className={`w-full px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border font-bold cursor-pointer text-[10px] sm:text-xs ${inputThemeClass}`}
                 >
                   <option value="no change" className={isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>no change (Keep current)</option>
                   <option value="320x240" className={isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>320x240 (240p)</option>
@@ -388,30 +391,30 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
                   <option value="1440x1080" className={isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>1440x1080 (1080p 4:3)</option>
                   <option value="1920x1080" className={isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>1920x1080 (1080p Full HD)</option>
                   <option value="2560x1440" className={isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>2560x1440 (1440p 2K WQHD)</option>
-                  <option value="3840x2160" className={isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>3840x2160 (2160p 4K UHD)</option>
+                  <option value="3840x2160" className={isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>3840x2160 (4K UHD)</option>
                   <option value="custom" className={isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>Custom resolution...</option>
                 </select>
 
                 {resolution === 'custom' && (
-                  <div className="grid grid-cols-2 gap-2 pt-1.5">
+                  <div className="grid grid-cols-2 gap-1.5 pt-1">
                     <div>
-                      <label className="text-[10px] text-slate-400">Width (العرض)</label>
+                      <label className="text-[9px] sm:text-[10px] text-slate-400">Width (العرض)</label>
                       <input
                         type="number"
                         value={customWidth}
                         onChange={(e) => setCustomWidth(e.target.value)}
                         placeholder="1920"
-                        className={`w-full px-3 py-1.5 rounded-xl border text-xs font-bold ${inputThemeClass}`}
+                        className={`w-full px-2 py-1 rounded-lg border text-[10px] sm:text-xs font-bold ${inputThemeClass}`}
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-400">Height (الارتفاع)</label>
+                      <label className="text-[9px] sm:text-[10px] text-slate-400">Height (الارتفاع)</label>
                       <input
                         type="number"
                         value={customHeight}
                         onChange={(e) => setCustomHeight(e.target.value)}
                         placeholder="1080"
-                        className={`w-full px-3 py-1.5 rounded-xl border text-xs font-bold ${inputThemeClass}`}
+                        className={`w-full px-2 py-1 rounded-lg border text-[10px] sm:text-xs font-bold ${inputThemeClass}`}
                       />
                     </div>
                   </div>
@@ -422,18 +425,18 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
 
           {/* قسم إعدادات الصوت (Audio Settings) */}
           {(isVideo || isAudio) && (
-            <div className={`p-3.5 rounded-2xl border space-y-3 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-              <div className="text-xs font-black text-sky-400">
+            <div className={`p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border space-y-2 sm:space-y-3 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+              <div className="text-[10px] sm:text-xs font-black text-sky-400">
                 <span>🎵 Audio Settings</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <label className="text-slate-400 text-[11px]">Audio Codec</label>
+                  <label className="text-slate-400 text-[10px] sm:text-[11px]">Audio Codec</label>
                   <select
                     value={audioCodec}
                     onChange={(e) => setAudioCodec(e.target.value)}
-                    className={`w-full px-3 py-2 rounded-xl border font-bold cursor-pointer text-xs ${inputThemeClass}`}
+                    className={`w-full px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border font-bold cursor-pointer text-[10px] sm:text-xs ${inputThemeClass}`}
                   >
                     <option value="copy" className={isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>Copy (no re-encoding)</option>
                     <option value="none" className={isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>None (remove audio)</option>
@@ -447,12 +450,12 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-slate-400 text-[11px]">Audio Bitrate (kbit/s)</label>
+                  <label className="text-slate-400 text-[10px] sm:text-[11px]">Audio Bitrate (kbit/s)</label>
                   <input
                     type="text"
                     value={audioBitrate}
                     onChange={(e) => setAudioBitrate(e.target.value)}
-                    className={`w-full px-3 py-2 rounded-xl border font-bold text-xs ${inputThemeClass}`}
+                    className={`w-full px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border font-bold text-[10px] sm:text-xs ${inputThemeClass}`}
                   />
                 </div>
               </div>
@@ -461,31 +464,31 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
 
           {/* قسم القص للفيديو (Trim Video) */}
           {isVideo && (
-            <div className={`p-3.5 rounded-2xl border space-y-3 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-              <div className="text-xs font-black text-sky-400">
+            <div className={`p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border space-y-2 sm:space-y-3 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+              <div className="text-[10px] sm:text-xs font-black text-sky-400">
                 <span>✂️ Trim Video</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <label className="text-slate-400 text-[11px]">Trim Start</label>
+                  <label className="text-slate-400 text-[10px] sm:text-[11px]">Trim Start</label>
                   <input
                     type="text"
                     placeholder="00:00:00"
                     value={trimStart}
                     onChange={(e) => setTrimStart(e.target.value)}
-                    className={`w-full px-3 py-2 rounded-xl border font-bold text-xs ${inputThemeClass}`}
+                    className={`w-full px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border font-bold text-[10px] sm:text-xs ${inputThemeClass}`}
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-slate-400 text-[11px]">Trim End</label>
+                  <label className="text-slate-400 text-[10px] sm:text-[11px]">Trim End</label>
                   <input
                     type="text"
                     placeholder="00:00:00"
                     value={trimEnd}
                     onChange={(e) => setTrimEnd(e.target.value)}
-                    className={`w-full px-3 py-2 rounded-xl border font-bold text-xs ${inputThemeClass}`}
+                    className={`w-full px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border font-bold text-[10px] sm:text-xs ${inputThemeClass}`}
                   />
                 </div>
               </div>
@@ -494,23 +497,23 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
         </div>
 
         {/* أزرار الحفظ والإلغاء وتطبيق على الكل */}
-        <div className={`flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+        <div className={`flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 sm:pt-3 border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
           {hasMultipleFiles ? (
-            <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-300">
+            <label className="flex items-center gap-1.5 cursor-pointer text-[10px] sm:text-xs font-bold text-slate-300">
               <input
                 type="checkbox"
                 checked={applyToAll}
                 onChange={(e) => setApplyToAll(e.target.checked)}
-                className="w-4 h-4 rounded accent-sky-500 cursor-pointer"
+                className="w-3.5 h-3.5 rounded accent-sky-500 cursor-pointer"
               />
               <span>Apply to all files</span>
             </label>
           ) : <div />}
 
-          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               onClick={onClose}
-              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl border font-bold text-xs cursor-pointer transition-colors ${
+              className={`flex-1 sm:flex-none px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border font-bold text-[10px] sm:text-xs cursor-pointer transition-colors ${
                 isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
               }`}
             >
@@ -518,7 +521,7 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
             </button>
             <button
               onClick={handleSave}
-              className="flex-1 sm:flex-none px-5 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-black text-xs shadow-lg shadow-sky-500/30 cursor-pointer"
+              className="flex-1 sm:flex-none px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-black text-[10px] sm:text-xs shadow-lg shadow-sky-500/30 cursor-pointer"
             >
               Apply Options
             </button>
