@@ -60,12 +60,6 @@ export default function IMediaApp() {
   const itemsPerPage = 20;
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-  }, []);
-
-  useEffect(() => {
     document.title = t.mainHeading || 'iMedia - Local Media Converter';
     let metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) {
@@ -98,9 +92,6 @@ export default function IMediaApp() {
       const newCompleted = items.filter(i => i.status === 'completed').length;
       if (newCompleted > prevCompleted) {
         showToast(isRtl ? '✨ تم اكتمال تحويل ملف بنجاح!' : '✨ File conversion completed successfully!');
-        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-          new Notification('iMedia', { body: isRtl ? 'تم الانتهاء من معالجة ملف بنجاح' : 'A file has been successfully converted!' });
-        }
       }
 
       setFileList([...items]);
