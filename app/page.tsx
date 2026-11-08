@@ -200,7 +200,7 @@ export default function IMediaApp() {
     try {
       setIsZipLoading(true);
       showToast(isRtl ? '📦 جاري تجهيز وضغط الملفات في مجلد ZIP...' : '📦 Preparing ZIP archive for files...');
-      await queueManager.downloadAllAsZip();
+      await queueManager.downloadAllAsZip(filteredFileList);
     } catch (e) {
       showToast(isRtl ? '❌ حدث خطأ أثناء إنشاء ملف الـ ZIP' : '❌ Failed to create ZIP archive');
     } finally {

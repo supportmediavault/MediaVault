@@ -50,7 +50,6 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownCoords, setDropdownCoords] = useState({ top: 0, right: 0 });
 
-  // حساب الإحداثيات الديناميكية للـ Portal لضمان ظهور القائمة بمكانها الصحيح تماماً
   const handleToggleDropdown = () => {
     if (!isFormatDropdownOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
@@ -134,13 +133,13 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
 
   return (
     <div
-      className={`p-4 rounded-2xl border transition-all duration-300 flex flex-col gap-3 relative ${
+      className={`p-4 rounded-2xl border transition-all duration-300 flex flex-col gap-3 relative overflow-hidden ${
         isDarkMode
           ? 'bg-slate-900 border-slate-700 text-slate-100 shadow-lg'
           : 'bg-white border-slate-200 text-slate-800 shadow-sm'
       }`}
     >
-      <div className="flex items-center justify-between gap-3 flex-wrap lg:flex-nowrap">
+      <div className="flex items-start justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <div
             className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${
@@ -205,217 +204,216 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-          
-          {/* زر اختيار الصيغة وقائمة الـ Portal */}
-          <div className="relative inline-block text-left">
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-slate-400">→</span>
-              <button
-                ref={buttonRef}
-                type="button"
-                onClick={handleToggleDropdown}
-                className={`px-3 py-1.5 rounded-xl border text-xs font-black flex items-center gap-2 transition-all cursor-pointer shadow-sm ${
-                  isDarkMode 
-                    ? 'bg-slate-800 border-slate-700 text-sky-400 hover:bg-slate-700' 
-                    : 'bg-slate-100 border-slate-200 text-sky-700 hover:bg-slate-200'
-                }`}
-              >
-                <span className="uppercase">{item.targetFormat}</span>
-                <span className={`text-[10px] transition-transform duration-200 ${isFormatDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
-              </button>
-            </div>
-
-            {isFormatDropdownOpen && typeof window !== 'undefined' && createPortal(
-              <div 
-                ref={dropdownRef}
-                style={{ top: `${dropdownCoords.top}px`, right: `${dropdownCoords.right}px` }}
-                className={`fixed w-[320px] rounded-2xl shadow-2xl border z-[999999] overflow-hidden backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-150 ${
-                  isDarkMode 
-                    ? 'bg-slate-950/95 border-slate-700 text-white shadow-black/90' 
-                    : 'bg-white/95 border-slate-200 text-slate-800 shadow-2xl'
-                }`}
-              >
-                <div className="p-2.5 border-b border-slate-700/20">
-                  <input
-                    type="text"
-                    placeholder={isRtl ? 'بحث عن صيغة...' : 'Search format...'}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full px-3 py-1.5 rounded-xl text-xs font-medium border focus:outline-none ${
-                      isDarkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
-                    }`}
-                    autoFocus
-                  />
-                </div>
-
-                <div className="flex" style={{ height: '210px' }}>
-                  <div className={`w-[110px] flex-shrink-0 border-r flex flex-col p-1.5 gap-1 ${
-                    isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-100 bg-slate-50'
-                  }`}>
-                    {(['video', 'audio', 'image'] as const).map((cat) => {
-                      const isActive = activeCategory === cat && !searchQuery;
-                      return (
-                        <button
-                          key={cat}
-                          type="button"
-                          onClick={() => { setActiveCategory(cat); setSearchQuery(''); }}
-                          className={`w-full px-3 py-2 rounded-xl text-xs font-bold text-left flex items-center justify-between transition-all cursor-pointer ${
-                            isActive
-                              ? 'bg-sky-500 text-white shadow-sm'
-                              : isDarkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800/60' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-                          }`}
-                        >
-                          <span className="capitalize">{cat}</span>
-                          <span className="text-[10px]">›</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="flex-1 p-2.5 overflow-y-auto">
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {getFilteredFormats().map((fmt) => {
-                        const isSelected = item.targetFormat.toLowerCase() === fmt.toLowerCase();
-                        return (
-                          <button
-                            key={fmt}
-                            type="button"
-                            onClick={() => {
-                              onUpdateFormat(item.id, fmt.toLowerCase());
-                              setIsFormatDropdownOpen(false);
-                            }}
-                            className={`py-1.5 px-1 rounded-lg text-[11px] font-black uppercase transition-all cursor-pointer text-center truncate ${
-                              isSelected
-                                ? 'bg-sky-600 text-white shadow-sm scale-105'
-                                : isDarkMode
-                                ? 'bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
-                                : 'bg-slate-100 text-slate-700 hover:bg-sky-50 hover:text-sky-600 border border-slate-200'
-                            }`}
-                          >
-                            {fmt}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>,
-              document.body
-            )}
-          </div>
-
-          {fileTypeCategory === 'video' && (
+        {/* أزرار إعادة التعيين والحذف داخل الحدود تماماً وبمسافة مريحة */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {onResetItem && (
             <button
-              onClick={onExtractAudio}
-              className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
-                isDarkMode
-                  ? 'bg-slate-800 border-slate-700 text-sky-400 hover:bg-slate-700'
+              onClick={() => onResetItem(item.id)}
+              className={`p-1.5 rounded-xl border transition-colors cursor-pointer ${
+                isDarkMode 
+                  ? 'bg-slate-800 border-slate-700 text-sky-400 hover:bg-slate-700 hover:text-sky-300' 
                   : 'bg-slate-100 border-slate-200 text-sky-600 hover:bg-slate-200'
               }`}
-              title={isRtl ? 'استخراج الصوت فقط' : 'Extract Audio'}
+              title={isRtl ? 'إعادة تعيين الملف للحالة الأصلية' : 'Reset'}
             >
-              <span>🎧</span>
-              <span className="hidden sm:inline">{isRtl ? 'استخراج الصوت' : 'Extract Audio'}</span>
-            </button>
-          )}
-
-          {extractedAudioUrl && (
-            <a
-              href={extractedAudioUrl}
-              download={`${item.customName}_audio.mp3`}
-              style={{ backgroundColor: '#059669', color: '#ffffff' }}
-              className="px-3 py-1.5 rounded-xl text-xs font-black shadow-md flex items-center gap-1.5 cursor-pointer flex-shrink-0 hover:opacity-90 transition-opacity"
-              title="Download Extracted Audio"
-            >
-              <span className="text-sm">🎵</span>
-              <span className="whitespace-nowrap" style={{ color: '#ffffff' }}>
-                {isRtl ? 'تحميل الصوت' : 'Download Audio'}
-              </span>
-            </a>
-          )}
-
-          {item.status === 'completed' && item.downloadUrl && (
-            <>
-              <button
-                onClick={() => onPreview(item.downloadUrl!, item.customName, fileTypeCategory)}
-                className="px-2.5 py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-500 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
-              >
-                <span>▶</span>
-                <span>{isRtl ? 'معاينة' : 'Preview'}</span>
-              </button>
-              <a
-                href={item.downloadUrl}
-                download={`${item.customName}.${item.targetFormat}`}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1"
-              >
-                <span>📥</span>
-                <span>{isRtl ? 'تحميل' : 'Download'}</span>
-              </a>
-            </>
-          )}
-
-          {item.status === 'idle' && (
-            <button
-              onClick={() => onStartSingle(item.id)}
-              className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
-            >
-              {isRtl ? 'ابدأ' : 'Start'}
-            </button>
-          )}
-
-          {item.status === 'converting' && (
-            <button
-              onClick={() => onPauseSingle(item.id)}
-              className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
-            >
-              {isRtl ? 'إيقاف مؤقت' : 'Pause'}
-            </button>
-          )}
-
-          {item.status === 'paused' && (
-            <button
-              onClick={() => onStartSingle(item.id)}
-              className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
-            >
-              {isRtl ? 'استئناف' : 'Resume'}
+              🔄
             </button>
           )}
 
           <button
-            onClick={onOpenOptions}
-            className={`p-1.5 rounded-xl border transition-colors cursor-pointer ${
-              isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
-            }`}
-            title={isRtl ? 'إعدادات متقدمة' : 'Options'}
+            onClick={() => onRemove(item.id)}
+            className="p-1.5 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-colors cursor-pointer"
+            title={isRtl ? 'حذف' : 'Remove'}
           >
-            ⚙️
+            ✕
+          </button>
+        </div>
+      </div>
+
+      {/* شريط الخيارات والأزرار مع مسافات مريحة ومتناسقة (gap-2) */}
+      <div className="flex items-center gap-2 flex-wrap justify-start pt-2 border-t border-slate-700/10">
+        
+        <div className="relative inline-block text-left">
+          <button
+            ref={buttonRef}
+            type="button"
+            onClick={handleToggleDropdown}
+            className={`px-3 py-1.5 rounded-xl border text-xs font-black flex items-center gap-2 transition-all cursor-pointer shadow-sm ${
+              isDarkMode 
+                ? 'bg-slate-800 border-slate-700 text-sky-400 hover:bg-slate-700' 
+                : 'bg-slate-100 border-slate-200 text-sky-700 hover:bg-slate-200'
+            }`}
+          >
+            <span className="uppercase">{item.targetFormat}</span>
+            <span className={`text-[10px] transition-transform duration-200 ${isFormatDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
           </button>
 
-          <div className="flex flex-col items-center gap-1">
-            {onResetItem && (
-              <button
-                onClick={() => onResetItem(item.id)}
-                className={`p-1.5 rounded-xl border transition-colors cursor-pointer ${
-                  isDarkMode 
-                    ? 'bg-slate-800 border-slate-700 text-sky-400 hover:bg-slate-700 hover:text-sky-300' 
-                    : 'bg-slate-100 border-slate-200 text-sky-600 hover:bg-slate-200'
-                }`}
-                title={isRtl ? 'إعادة تعيين الملف للحالة الأصلية' : 'Reset / Revert to zero'}
-              >
-                🔄
-              </button>
-            )}
-
-            <button
-              onClick={() => onRemove(item.id)}
-              className="p-1.5 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-colors cursor-pointer"
-              title={isRtl ? 'حذف' : 'Remove'}
+          {isFormatDropdownOpen && typeof window !== 'undefined' && createPortal(
+            <div 
+              ref={dropdownRef}
+              style={{ top: `${dropdownCoords.top}px`, right: `${dropdownCoords.right}px` }}
+              className={`fixed w-[320px] rounded-2xl shadow-2xl border z-[999999] overflow-hidden backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-150 ${
+                isDarkMode 
+                  ? 'bg-slate-950/95 border-slate-700 text-white shadow-black/90' 
+                  : 'bg-white/95 border-slate-200 text-slate-800 shadow-2xl'
+              }`}
             >
-              ✕
-            </button>
-          </div>
+              <div className="p-2.5 border-b border-slate-700/20">
+                <input
+                  type="text"
+                  placeholder={isRtl ? 'بحث عن صيغة...' : 'Search format...'}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`w-full px-3 py-1.5 rounded-xl text-xs font-medium border focus:outline-none ${
+                    isDarkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                  }`}
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex" style={{ height: '210px' }}>
+                <div className={`w-[110px] flex-shrink-0 border-r flex flex-col p-1.5 gap-1 ${
+                  isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-100 bg-slate-50'
+                }`}>
+                  {(['video', 'audio', 'image'] as const).map((cat) => {
+                    const isActive = activeCategory === cat && !searchQuery;
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => { setActiveCategory(cat); setSearchQuery(''); }}
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold text-left flex items-center justify-between transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-sky-500 text-white shadow-sm'
+                            : isDarkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800/60' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                        }`}
+                      >
+                        <span className="capitalize">{cat}</span>
+                        <span className="text-[10px]">›</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex-1 p-2.5 overflow-y-auto">
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {getFilteredFormats().map((fmt) => {
+                      const isSelected = item.targetFormat.toLowerCase() === fmt.toLowerCase();
+                      return (
+                        <button
+                          key={fmt}
+                          type="button"
+                          onClick={() => {
+                            onUpdateFormat(item.id, fmt.toLowerCase());
+                            setIsFormatDropdownOpen(false);
+                          }}
+                          className={`py-1.5 px-1 rounded-lg text-[11px] font-black uppercase transition-all cursor-pointer text-center truncate ${
+                            isSelected
+                              ? 'bg-sky-600 text-white shadow-sm scale-105'
+                              : isDarkMode
+                              ? 'bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
+                              : 'bg-slate-100 text-slate-700 hover:bg-sky-50 hover:text-sky-600 border border-slate-200'
+                          }`}
+                        >
+                          {fmt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
         </div>
+
+        {fileTypeCategory === 'video' && (
+          <button
+            onClick={onExtractAudio}
+            className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
+              isDarkMode
+                ? 'bg-slate-800 border-slate-700 text-sky-400 hover:bg-slate-700'
+                : 'bg-slate-100 border-slate-200 text-sky-600 hover:bg-slate-200'
+            }`}
+            title={isRtl ? 'استخراج الصوت فقط' : 'Extract Audio'}
+          >
+            <span>🎧</span>
+            <span>{isRtl ? 'استخراج الصوت' : 'Extract'}</span>
+          </button>
+        )}
+
+        {extractedAudioUrl && (
+          <a
+            href={extractedAudioUrl}
+            download={`${item.customName}_audio.mp3`}
+            style={{ backgroundColor: '#059669', color: '#ffffff' }}
+            className="px-3 py-1.5 rounded-xl text-xs font-black shadow-md flex items-center gap-1.5 cursor-pointer hover:opacity-90 transition-opacity"
+            title="Download Extracted Audio"
+          >
+            <span>🎵</span>
+            <span className="flex items-center gap-1" style={{ color: '#ffffff' }}>
+              {isRtl ? 'تحميل الصوت' : 'Audio'}
+              <span>📥</span>
+            </span>
+          </a>
+        )}
+
+        {item.status === 'completed' && item.downloadUrl && (
+          <>
+            <button
+              onClick={() => onPreview(item.downloadUrl!, item.customName, fileTypeCategory)}
+              className="px-2.5 py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-500 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+            >
+              <span>▶</span>
+              <span>{isRtl ? 'معاينة' : 'Preview'}</span>
+            </button>
+            <a
+              href={item.downloadUrl}
+              download={`${item.customName}.${item.targetFormat}`}
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1"
+            >
+              <span>📥</span>
+              <span>{isRtl ? 'تحميل' : 'Download'}</span>
+            </a>
+          </>
+        )}
+
+        {item.status === 'idle' && (
+          <button
+            onClick={() => onStartSingle(item.id)}
+            className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
+          >
+            {isRtl ? 'ابدأ' : 'Start'}
+          </button>
+        )}
+
+        {item.status === 'converting' && (
+          <button
+            onClick={() => onPauseSingle(item.id)}
+            className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
+          >
+            {isRtl ? 'إيقاف مؤقت' : 'Pause'}
+          </button>
+        )}
+
+        {item.status === 'paused' && (
+          <button
+            onClick={() => onStartSingle(item.id)}
+            className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
+          >
+            {isRtl ? 'استئناف' : 'Resume'}
+          </button>
+        )}
+
+        <button
+          onClick={onOpenOptions}
+          className={`p-1.5 rounded-xl border transition-colors cursor-pointer ${
+            isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
+          }`}
+          title={isRtl ? 'إعدادات متقدمة' : 'Options'}
+        >
+          ⚙️
+        </button>
       </div>
 
       {(item.status === 'converting' || item.status === 'paused') && (
