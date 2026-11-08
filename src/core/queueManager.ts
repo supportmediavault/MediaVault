@@ -32,7 +32,7 @@ export type QueueListener = (items: QueueItem[], isGlobalPaused: boolean) => voi
 export class ConversionQueueManager {
   private items: QueueItem[] = [];
   private listeners: QueueListener[] = [];
-  private concurrencyLimit: number = 100; // تم ضبطه على 100 لتوازن مذهل بين السرعة والاستقرار التام
+  private concurrencyLimit: number = 100;
   private isRunning: boolean = false;
   private activeWorkers: number = 0;
   private globalPaused: boolean = false;
@@ -414,7 +414,6 @@ export class ConversionQueueManager {
     this.isRunning = false;
   }
 
-  // دالة الـ ZIP الشاملة والمضمونة 100% لجلب جميع الـ 4200 ملف بدون أي نقصان
   public async downloadAllAsZip() {
     try {
       const JSZip = (await import('jszip')).default;
@@ -424,7 +423,6 @@ export class ConversionQueueManager {
       
       if (targetItems.length === 0) return;
 
-      // إضافة الملفات بكفاءة عالية مع استخدام الـ blob المخزن مباشرة
       for (const item of targetItems) {
         let blobToZip = item.blob;
         if (!blobToZip && item.downloadUrl) {
@@ -436,7 +434,6 @@ export class ConversionQueueManager {
           }
         }
         if (blobToZip) {
-          // منع تكرار الأسماء عبر دمج الـ ID المختصر إذا لزم الأمر، واستخدام وضع التخزين السريع STORE
           const fileName = `${item.customName || 'file'}_${item.id}.${item.targetFormat}`;
           zip.file(fileName, blobToZip, { compression: "STORE" });
         }

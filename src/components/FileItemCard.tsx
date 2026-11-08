@@ -95,9 +95,9 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
 
   const getDynamicEstimatedSize = () => {
     let multiplier = 0.80;
-    const comp = item.options.compressionLevel;
-    const res = item.options.resolution;
-    const crf = item.options.crf;
+    const comp = item.options?.compressionLevel;
+    const res = item.options?.resolution;
+    const crf = item.options?.crf;
 
     if (crf !== undefined && crf !== null) {
       multiplier = Math.max(0.05, Math.min(1.2, 1 - (crf / 60)));
@@ -130,6 +130,9 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
     }
     return categories[activeCategory];
   };
+
+  // التحقق من وجود أوقات قص نشطة
+  const hasTrimActive = Boolean(item.options?.trimStart || item.options?.trimEnd);
 
   return (
     <div
@@ -200,11 +203,16 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
                   Est: {formatFileSize(getDynamicEstimatedSize())}
                 </span>
               )}
+              {hasTrimActive && (
+                <span className="text-amber-400 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded text-[10px]">
+                  ✂️ Trimmed
+                </span>
+              )}
             </div>
           </div>
         </div>
 
-        {/* أزرار إعادة التعيين والحذف داخل الحدود تماماً وبمسافة مريحة */}
+        {/* أزرار إعادة التعيين والحذف */}
         <div className="flex items-center gap-2 flex-shrink-0">
           {onResetItem && (
             <button
@@ -230,7 +238,7 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
         </div>
       </div>
 
-      {/* شريط الخيارات والأزرار مع مسافات مريحة ومتناسقة (gap-2) */}
+      {/* شريط الخيارات والأزرار */}
       <div className="flex items-center gap-2 flex-wrap justify-start pt-2 border-t border-slate-700/10">
         
         <div className="relative inline-block text-left">
@@ -367,14 +375,29 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
               <span>▶</span>
               <span>{isRtl ? 'معاينة' : 'Preview'}</span>
             </button>
+
+            {/* زر التحميل الكامل */}
             <a
               href={item.downloadUrl}
               download={`${item.customName}.${item.targetFormat}`}
               className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1"
             >
               <span>📥</span>
-              <span>{isRtl ? 'تحميل' : 'Download'}</span>
+              <span>{isRtl ? 'تحميل كامل' : 'Download'}</span>
             </a>
+
+            {/* زر التحميل المقصوص الفاقع والبارز جداً */}
+            {hasTrimActive && (
+              <a
+              href={item.downloadUrl}
+              download={`${item.customName}_trimmed.${item.targetFormat}`}
+              className="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-xl text-xs shadow-lg flex items-center gap-1.5 border-2 border-amber-500 transition-transform hover:scale-105 animate-pulse"
+              title={isRtl ? 'تحميل الفيديو المقصوص المؤكد فقط' : 'Download confirmed trimmed video only'}
+            >
+                <span>✂️</span>
+                <span>{isRtl ? 'تحميل المقصوص ✂️' : 'Trimmed Download'}</span>
+              </a>
+            )}
           </>
         )}
 
@@ -423,7 +446,7 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
               {item.status === 'paused' ? (isRtl ? 'متوقف مؤقتاً' : 'Paused') : `${item.progress}%`}
             </span>
             <span className="text-slate-400">
-              {item.status === 'paused' ? '' : (isRtl ? 'جاري المعالجة...' : 'Converting...')}
+              {item.status === 'paused' ? '' : (isRtl ? 'جاري المعالجة والقص...' : 'Processing & Trimming...')}
             </span>
           </div>
           <div className={`w-full h-2 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
@@ -440,7 +463,7 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
       {item.status === 'completed' && (
         <div className="text-[11px] text-emerald-500 font-bold flex items-center gap-1.5">
           <span>✨</span>
-          <span>{isRtl ? 'اكتمل التحجيم والمعالجة بنجاح' : 'Completed Successfully'}</span>
+          <span>{isRtl ? 'اكتملت المعالجة والقص بنجاح' : 'Processed and Trimmed Successfully'}</span>
         </div>
       )}
 
