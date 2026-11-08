@@ -1,18 +1,24 @@
-import './globals.css';
-import type { Metadata } from 'next';
-import { Analytics } from '@vercel/analytics/react';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'iMedia | 100% Client-Side Media Converter',
-  description: 'Convert images, audio, and video files directly in your browser with absolute privacy guaranteed.',
-  manifest: '/manifest.json',
-};
+import './globals.css';
+import { useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // تسجيل الـ Service Worker لتفعيل وضع الـ PWA والعمل بدون إنترنت
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((reg) => console.log('Service Worker Registered successfully:', reg.scope))
+        .catch((err) => console.log('Service Worker Registration Failed:', err));
+    }
+  }, []);
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
@@ -30,6 +36,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <title>iMedia | 100% Client-Side Media Converter</title>
+        <meta name="description" content="Convert images, audio, and video files directly in your browser with absolute privacy guaranteed." />
+        <link rel="manifest" href="/manifest.json" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
