@@ -73,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
       }`}
     >
       <div className="w-full px-6 flex items-center justify-between">
-        {/* شعار iMedia بالأزرق السماوي الهادئ والأنيق */}
+        {/* شعار iMedia مع فرض اتجاه LTR للحفاظ على الترتيب الصحيح دائماً */}
         <div
           onClick={() => window.location.reload()}
           style={{
@@ -91,7 +91,8 @@ export const Header: React.FC<HeaderProps> = ({
             🛡️
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {/* تم إضافة dir="ltr" هنا حصراً لضمان بقاء i ثم Media مهما كانت لغة الموقع */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }} dir="ltr">
             {/* حرف الـ i باللون الأسود الداكن الأنيق مع ميلان عصري */}
             <span
               style={{
@@ -112,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({
                 fontWeight: 900,
                 fontStyle: 'italic',
                 transform: 'skewX(-4deg)',
-                color: isDarkMode ? '#38bdf8' : '#0284c7', // أزرق سماوي ناعم ومناسب جداً للثيم
+                color: isDarkMode ? '#38bdf8' : '#0284c7',
               }}
             >
               Media
