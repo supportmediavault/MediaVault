@@ -38,6 +38,7 @@ export default function RootLayout({
       <head>
         <title>iMedia | 100% Client-Side Media Converter</title>
         <meta name="description" content="Convert images, audio, and video files directly in your browser with absolute privacy guaranteed." />
+        <link rel="icon" href="/icon.png" type="image/png" />
         <link rel="manifest" href="/manifest.json" />
         <script
           type="application/ld+json"
