@@ -131,7 +131,6 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
     return categories[activeCategory];
   };
 
-  // التحقق من وجود أوقات قص نشطة
   const hasTrimActive = Boolean(item.options?.trimStart || item.options?.trimEnd);
 
   return (
@@ -212,7 +211,6 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
           </div>
         </div>
 
-        {/* أزرار إعادة التعيين والحذف */}
         <div className="flex items-center gap-2 flex-shrink-0">
           {onResetItem && (
             <button
@@ -238,7 +236,6 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
         </div>
       </div>
 
-      {/* شريط الخيارات والأزرار */}
       <div className="flex items-center gap-2 flex-wrap justify-start pt-2 border-t border-slate-700/10">
         
         <div className="relative inline-block text-left">
@@ -267,6 +264,7 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
               }`}
             >
               <div className="p-2.5 border-b border-slate-700/20">
+                {/* تمت إزالة autoFocus لمنع فتح لوحة المفاتيح المزعجة على الهواتف تلقائياً */}
                 <input
                   type="text"
                   placeholder={isRtl ? 'بحث عن صيغة...' : 'Search format...'}
@@ -275,7 +273,6 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
                   className={`w-full px-3 py-1.5 rounded-xl text-xs font-medium border focus:outline-none ${
                     isDarkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
                   }`}
-                  autoFocus
                 />
               </div>
 
@@ -376,7 +373,6 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
               <span>{isRtl ? 'معاينة' : 'Preview'}</span>
             </button>
 
-            {/* زر التحميل الكامل */}
             <a
               href={item.downloadUrl}
               download={`${item.customName}.${item.targetFormat}`}
@@ -386,14 +382,13 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
               <span>{isRtl ? 'تحميل كامل' : 'Download'}</span>
             </a>
 
-            {/* زر التحميل المقصوص الفاقع والبارز جداً */}
             {hasTrimActive && (
               <a
-              href={item.downloadUrl}
-              download={`${item.customName}_trimmed.${item.targetFormat}`}
-              className="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-xl text-xs shadow-lg flex items-center gap-1.5 border-2 border-amber-500 transition-transform hover:scale-105 animate-pulse"
-              title={isRtl ? 'تحميل الفيديو المقصوص المؤكد فقط' : 'Download confirmed trimmed video only'}
-            >
+                href={item.downloadUrl}
+                download={`${item.customName}_trimmed.${item.targetFormat}`}
+                className="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-xl text-xs shadow-lg flex items-center gap-1.5 border-2 border-amber-500 transition-transform hover:scale-105 animate-pulse"
+                title={isRtl ? 'تحميل الفيديو المقصوص المؤكد فقط' : 'Download confirmed trimmed video only'}
+              >
                 <span>✂️</span>
                 <span>{isRtl ? 'تحميل المقصوص ✂️' : 'Trimmed Download'}</span>
               </a>

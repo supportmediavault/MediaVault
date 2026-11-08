@@ -82,7 +82,7 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
   const [trimStart, setTrimStart] = useState(item.options?.trimStart || '');
   const [trimEnd, setTrimEnd] = useState(item.options?.trimEnd || '');
   
-  const [showTrimConfirmation, setShowTrimConfirmation] = useState(false);
+  const [showTrimConfirmation, setShowTrimConfirmation] = false ? useState(false) : useState(false);
   const [applyToAll, setApplyToAll] = useState(false);
 
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -90,23 +90,6 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
   const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number }>({ startX: 0, startY: 0, initialX: 0, initialY: 0 });
 
   if (!isOpen) return null;
-
-  const getCrfQualityLabel = (val: number) => {
-    if (val === 0) return 'Lossless';
-    if (val <= 19) return t('compLow') || 'High quality';
-    if (val <= 27) return t('compMedium') || 'Normal quality';
-    if (val <= 45) return t('compHigh') || 'Low quality';
-    return 'Worst quality';
-  };
-
-  const getImageQualityLabel = (val: number) => {
-    if (val >= 90) return 'High quality';
-    if (val >= 70) return 'Normal quality';
-    if (val >= 40) return 'Low quality';
-    return 'Worst quality';
-  };
-
-  const currentQuality = isVideo ? getCrfQualityLabel(crf) : getImageQualityLabel(imageQuality);
 
   const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
     setIsDragging(true);
@@ -212,9 +195,10 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
         dir={isRtl ? 'rtl' : 'ltr'}
         style={{ 
           transform: `translate(${position.x}px, ${position.y}px)`,
-          width: window.innerWidth < 640 ? '80vw' : '38rem'
+          // تم ضبط العرض ليكون 92vw على الموبايل لعدم الالتصاق بالأطراف نهائياً
+          width: window.innerWidth < 640 ? '92vw' : '38rem'
         }}
-        className={`pointer-events-auto max-h-[75vh] sm:max-h-[85vh] overflow-y-auto p-2.5 sm:p-5 rounded-2xl sm:rounded-3xl shadow-2xl border space-y-2.5 sm:space-y-4 relative select-none z-[1000000] ${
+        className={`pointer-events-auto max-h-[75vh] sm:max-h-[85vh] overflow-y-auto p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-2xl border space-y-2.5 sm:space-y-4 relative select-none z-[1000000] ${
           isDarkMode ? 'bg-slate-950 border-slate-700 text-slate-100 shadow-black' : 'bg-white border-slate-200 text-slate-800 shadow-2xl'
         }`}
       >
