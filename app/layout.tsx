@@ -9,7 +9,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // تسجيل الـ Service Worker لتفعيل وضع الـ PWA والعمل بدون إنترنت
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
@@ -39,6 +38,7 @@ export default function RootLayout({
         <title>iMedia | 100% Client-Side Media Converter</title>
         <meta name="description" content="Convert images, audio, and video files directly in your browser with absolute privacy guaranteed." />
         <link rel="icon" href="/icon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/icon.png" />
         <link rel="manifest" href="/manifest.json" />
         <script
           type="application/ld+json"
