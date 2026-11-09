@@ -58,6 +58,10 @@ export const InstallModal: React.FC<InstallModalProps> = ({
             src="/images/phone.png"
             alt="Installation Guide"
             className="w-full h-auto max-h-48 object-contain rounded-xl"
+            onError={(e) => {
+              // إخفاء الصورة في حال حدث أي خطأ بالمسار لتجنب ظهور الأيقونة التالفة
+              (e.target as HTMLElement).style.display = 'none';
+            }}
           />
         </div>
 
