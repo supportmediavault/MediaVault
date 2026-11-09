@@ -82,7 +82,8 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
   const [trimStart, setTrimStart] = useState(item.options?.trimStart || '');
   const [trimEnd, setTrimEnd] = useState(item.options?.trimEnd || '');
   
-  const [showTrimConfirmation, setShowTrimConfirmation] = false ? useState(false) : useState(false);
+  // التصحيح هنا: استدعاء useState بالطريقة الصحيحة والثابتة تماماً
+  const [showTrimConfirmation, setShowTrimConfirmation] = useState(false);
   const [applyToAll, setApplyToAll] = useState(false);
 
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -195,7 +196,6 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
         dir={isRtl ? 'rtl' : 'ltr'}
         style={{ 
           transform: `translate(${position.x}px, ${position.y}px)`,
-          // تم ضبط العرض ليكون 92vw على الموبايل لعدم الالتصاق بالأطراف نهائياً
           width: window.innerWidth < 640 ? '92vw' : '38rem'
         }}
         className={`pointer-events-auto max-h-[75vh] sm:max-h-[85vh] overflow-y-auto p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-2xl border space-y-2.5 sm:space-y-4 relative select-none z-[1000000] ${
