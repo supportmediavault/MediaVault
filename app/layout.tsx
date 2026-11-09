@@ -1,23 +1,18 @@
-'use client';
-
 import './globals.css';
-import { useEffect } from 'react';
+import type { Metadata } from 'next';
 import { Analytics } from '@vercel/analytics/react';
+
+export const metadata: Metadata = {
+  title: 'iMedia | 100% Client-Side Media Converter',
+  description: 'Convert images, audio, and video files directly in your browser with absolute privacy guaranteed.',
+  manifest: '/manifest.json',
+};
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw.js')
-        .then((reg) => console.log('Service Worker Registered successfully:', reg.scope))
-        .catch((err) => console.log('Service Worker Registration Failed:', err));
-    }
-  }, []);
-
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
@@ -35,11 +30,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>iMedia | 100% Client-Side Media Converter</title>
-        <meta name="description" content="Convert images, audio, and video files directly in your browser with absolute privacy guaranteed." />
-        <link rel="icon" href="/icon.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/icon.png" />
-        <link rel="manifest" href="/manifest.json" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
