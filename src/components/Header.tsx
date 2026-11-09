@@ -146,14 +146,15 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           <div className="flex items-center gap-2.5 sm:gap-3" dir="ltr">
-            {/* تم تصغير حجم الأيقونة والنص والمسافات بنسبة 25% */}
+            
+            {/* زر تحميل التطبيق مع تصغير حجم الأيقونة (📥) بنسبة 35% باستخدام text-[10px] */}
             <button
               onClick={handleDownloadAppClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black bg-sky-600 hover:bg-sky-500 text-white shadow-sm shadow-sky-600/30 transition-transform hover:scale-105 cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-white bg-sky-600 hover:bg-sky-500 shadow-lg shadow-sky-600/30 cursor-pointer transition-all hover:scale-105"
               title="Download App"
             >
-              <span className="text-xs">📥</span>
-              <span className="tracking-wide">{isRtl ? 'تحميل التطبيق' : 'Download App'}</span>
+              <span className="text-[10px] leading-none">📥</span>
+              <span className="tracking-wide text-white">{isRtl ? 'تحميل التطبيق' : 'Download App'}</span>
             </button>
 
             <div className="relative">
