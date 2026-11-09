@@ -5,6 +5,9 @@ import { Analytics } from '@vercel/analytics/react';
 export const metadata: Metadata = {
   title: 'iMedia | 100% Client-Side Media Converter',
   description: 'Convert images, audio, and video files directly in your browser with absolute privacy guaranteed.',
+  icons: {
+    icon: '/icon.png',
+  },
   manifest: '/manifest.json',
 };
 
