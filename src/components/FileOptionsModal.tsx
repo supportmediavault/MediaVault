@@ -38,6 +38,8 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
   hasMultipleFiles,
   currentLang = 'en'
 }) => {
+  if (!isOpen) return null;
+
   const activeLang = baseTranslations[currentLang] ? currentLang : 'en';
   const t = (key: string) => {
     return baseTranslations[activeLang]?.[key] || baseTranslations['en']?.[key] || key;
@@ -87,8 +89,6 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
   
   const [showTrimConfirmation, setShowTrimConfirmation] = useState(false);
   const [applyToAll, setApplyToAll] = useState(false);
-
-  if (!isOpen) return null;
 
   const formatSecondsToHMS = (sec: number) => {
     const hrs = Math.floor(sec / 3600).toString().padStart(2, '0');
@@ -150,267 +150,267 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
     : 'bg-white border-slate-300 text-slate-900 focus:border-sky-500';
 
   return (
-    <div
-      dir={isRtl ? 'rtl' : 'ltr'}
-      className={`w-full max-w-md max-h-[85vh] flex flex-col rounded-3xl shadow-2xl border transition-all overflow-hidden ${
-        isDarkMode ? 'bg-slate-950 border-slate-800 text-slate-100 shadow-black' : 'bg-white border-slate-200 text-slate-800'
-      }`}
-    >
-      {/* رأس النافذة */}
-      <div className={`flex items-center justify-between px-4 py-3 border-b flex-shrink-0 ${isDarkMode ? 'border-slate-800 bg-slate-900/60' : 'border-slate-200 bg-slate-100'}`}>
-        <div className="flex items-center gap-2 overflow-hidden">
-          <span className="text-sky-400 font-bold text-sm">⚙️</span>
-          <h3 className="font-black text-xs truncate">
-            {t('targetFormat') || 'Options'} <span className="text-sky-400 text-[10px] font-normal truncate">({item.customName})</span>
-          </h3>
+    <div className="fixed inset-0 z-[999999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 overflow-y-auto">
+      <div
+        dir={isRtl ? 'rtl' : 'ltr'}
+        onClick={(e) => e.stopPropagation()}
+        className={`w-full max-w-[92vw] sm:max-w-md max-h-[80vh] flex flex-col rounded-3xl shadow-2xl border transition-all overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200 ${
+          isDarkMode ? 'bg-slate-950 border-slate-800 text-slate-100 shadow-black' : 'bg-white border-slate-200 text-slate-800'
+        }`}
+      >
+        <div className={`flex items-center justify-between px-4 py-3 border-b flex-shrink-0 ${isDarkMode ? 'border-slate-800 bg-slate-900/60' : 'border-slate-200 bg-slate-100'}`}>
+          <div className="flex items-center gap-2 overflow-hidden">
+            <span className="text-sky-400 font-bold text-sm">⚙️</span>
+            <h3 className="font-black text-xs truncate">
+              {t('targetFormat') || 'Options'} <span className="text-sky-400 text-[10px] font-normal truncate">({item.customName})</span>
+            </h3>
+          </div>
+          <button 
+            onClick={onClose} 
+            className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 font-bold transition-all cursor-pointer"
+          >
+            ✕
+          </button>
         </div>
-        <button 
-          onClick={onClose} 
-          className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 font-bold transition-all cursor-pointer"
-        >
-          ✕
-        </button>
-      </div>
 
-      {/* جسم الخيارات (قابل للتمرير بداخل الحاوية بدقة) */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3.5 text-xs font-bold">
-        {isImage && (
-          <div className={`p-3.5 rounded-2xl border space-y-3 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-            <div className="text-xs font-black text-sky-400 flex items-center gap-1">
-              <span>🖼️</span>
-              <span>{t('tabs')?.image || 'Image Settings'}</span>
-            </div>
-            <div className={`space-y-2 p-3 rounded-xl border ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
-              <div className="flex items-center justify-between">
-                <label className="text-slate-300 text-xs">{t('compression') || 'Image Quality'}: {imageQuality}%</label>
+        <div className="flex-1 overflow-y-auto p-4 space-y-3.5 text-xs font-bold">
+          {isImage && (
+            <div className={`p-3.5 rounded-2xl border space-y-3 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+              <div className="text-xs font-black text-sky-400 flex items-center gap-1">
+                <span>🖼️</span>
+                <span>{t('tabs')?.image || 'Image Settings'}</span>
+              </div>
+              <div className={`space-y-2 p-3 rounded-xl border ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
+                <div className="flex items-center justify-between">
+                  <label className="text-slate-300 text-xs">{t('compression') || 'Image Quality'}: {imageQuality}%</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={imageQuality}
+                    onChange={(e) => setImageQuality(Math.min(100, Math.max(1, Number(e.target.value))))}
+                    className={`w-14 px-1.5 py-0.5 rounded text-xs text-center font-bold border ${inputThemeClass}`}
+                  />
+                </div>
                 <input
-                  type="number"
+                  type="range"
                   min="1"
                   max="100"
                   value={imageQuality}
-                  onChange={(e) => setImageQuality(Math.min(100, Math.max(1, Number(e.target.value))))}
-                  className={`w-14 px-1.5 py-0.5 rounded text-xs text-center font-bold border ${inputThemeClass}`}
+                  onChange={(e) => setImageQuality(Number(e.target.value))}
+                  className="w-full accent-sky-500 cursor-pointer h-1.5 bg-slate-700 rounded-lg"
                 />
               </div>
-              <input
-                type="range"
-                min="1"
-                max="100"
-                value={imageQuality}
-                onChange={(e) => setImageQuality(Number(e.target.value))}
-                className="w-full accent-sky-500 cursor-pointer h-1.5 bg-slate-700 rounded-lg"
-              />
             </div>
-          </div>
-        )}
+          )}
 
-        {isVideo && (
-          <div className={`p-3.5 rounded-2xl border space-y-3 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-            <div className="text-xs font-black text-sky-400 flex items-center gap-1">
-              <span>📹</span>
-              <span>{t('tabs')?.video || 'Video Settings'}</span>
-            </div>
+          {isVideo && (
+            <div className={`p-3.5 rounded-2xl border space-y-3 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+              <div className="text-xs font-black text-sky-400 flex items-center gap-1">
+                <span>📹</span>
+                <span>{t('tabs')?.video || 'Video Settings'}</span>
+              </div>
 
-            <div className="space-y-1">
-              <label className="text-slate-400 text-[11px]">{t('videoCodec') || 'Video Codec'}</label>
-              <select
-                value={videoCodec}
-                onChange={(e) => setVideoCodec(e.target.value)}
-                className={`w-full px-3 py-2 rounded-xl border font-bold cursor-pointer text-xs ${inputThemeClass}`}
-              >
-                <option value="libx264">H.264 (x264)</option>
-                <option value="libx265">H.265 / HEVC (x265)</option>
-                <option value="copy">Copy (no re-encoding / Fast)</option>
-              </select>
-            </div>
+              <div className="space-y-1">
+                <label className="text-slate-400 text-[11px]">{t('videoCodec') || 'Video Codec'}</label>
+                <select
+                  value={videoCodec}
+                  onChange={(e) => setVideoCodec(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl border font-bold cursor-pointer text-xs ${inputThemeClass}`}
+                >
+                  <option value="libx264">H.264 (x264)</option>
+                  <option value="libx265">H.265 / HEVC (x265)</option>
+                  <option value="copy">Copy (no re-encoding / Fast)</option>
+                </select>
+              </div>
 
-            <div className={`space-y-2 p-3 rounded-xl border ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
-              <div className="flex items-center justify-between">
-                <label className="text-slate-300 text-xs">Constant Quality (CRF): {crf}</label>
+              <div className={`space-y-2 p-3 rounded-xl border ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
+                <div className="flex items-center justify-between">
+                  <label className="text-slate-300 text-xs">Constant Quality (CRF): {crf}</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="51"
+                    value={crf}
+                    onChange={(e) => setCrf(Number(e.target.value))}
+                    className={`w-14 px-1.5 py-0.5 rounded text-xs text-center font-bold border ${inputThemeClass}`}
+                  />
+                </div>
                 <input
-                  type="number"
+                  type="range"
                   min="0"
                   max="51"
                   value={crf}
                   onChange={(e) => setCrf(Number(e.target.value))}
-                  className={`w-14 px-1.5 py-0.5 rounded text-xs text-center font-bold border ${inputThemeClass}`}
+                  className="w-full accent-sky-500 cursor-pointer h-1.5 bg-slate-700 rounded-lg"
                 />
               </div>
-              <input
-                type="range"
-                min="0"
-                max="51"
-                value={crf}
-                onChange={(e) => setCrf(Number(e.target.value))}
-                className="w-full accent-sky-500 cursor-pointer h-1.5 bg-slate-700 rounded-lg"
-              />
-            </div>
 
-            <div className="space-y-1">
-              <label className="text-slate-400 text-[11px]">Video Resolution</label>
-              <select
-                value={resolution}
-                onChange={(e) => setResolution(e.target.value)}
-                className={`w-full px-3 py-2 rounded-xl border font-bold cursor-pointer text-xs ${inputThemeClass}`}
-              >
-                <option value="no change">no change (Keep current)</option>
-                <option value="1280x720">1280x720 (720p HD)</option>
-                <option value="1920x1080">1920x1080 (1080p Full HD)</option>
-                <option value="3840x2160">3840x2160 (4K UHD)</option>
-              </select>
-            </div>
-          </div>
-        )}
-
-        {(isVideo || isAudio) && (
-          <div className={`p-3.5 rounded-2xl border space-y-3 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-            <div className="text-xs font-black text-sky-400 flex items-center gap-1">
-              <span>🎵</span>
-              <span>{t('tabs')?.audio || 'Audio Settings'}</span>
-            </div>
-
-            <div className="grid grid-cols-1 gap-2">
               <div className="space-y-1">
-                <label className="text-slate-400 text-[11px]">Audio Codec</label>
+                <label className="text-slate-400 text-[11px]">Video Resolution</label>
                 <select
-                  value={audioCodec}
-                  onChange={(e) => setAudioCodec(e.target.value)}
+                  value={resolution}
+                  onChange={(e) => setResolution(e.target.value)}
                   className={`w-full px-3 py-2 rounded-xl border font-bold cursor-pointer text-xs ${inputThemeClass}`}
                 >
-                  <option value="copy">Copy (no re-encoding)</option>
-                  <option value="none">None (remove audio)</option>
-                  <option value="aac">AAC</option>
-                  <option value="libmp3lame">MP3</option>
+                  <option value="no change">no change (Keep current)</option>
+                  <option value="1280x720">1280x720 (720p HD)</option>
+                  <option value="1920x1080">1920x1080 (1080p Full HD)</option>
+                  <option value="3840x2160">3840x2160 (4K UHD)</option>
                 </select>
               </div>
+            </div>
+          )}
 
-              <div className="space-y-1">
-                <label className="text-slate-400 text-[11px]">Audio Bitrate (kbit/s)</label>
-                <input
-                  type="text"
-                  value={audioBitrate}
-                  onChange={(e) => setAudioBitrate(e.target.value)}
-                  className={`w-full px-3 py-2 rounded-xl border font-bold text-xs ${inputThemeClass}`}
-                />
+          {(isVideo || isAudio) && (
+            <div className={`p-3.5 rounded-2xl border space-y-3 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+              <div className="text-xs font-black text-sky-400 flex items-center gap-1">
+                <span>🎵</span>
+                <span>{t('tabs')?.audio || 'Audio Settings'}</span>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2">
+                <div className="space-y-1">
+                  <label className="text-slate-400 text-[11px]">Audio Codec</label>
+                  <select
+                    value={audioCodec}
+                    onChange={(e) => setAudioCodec(e.target.value)}
+                    className={`w-full px-3 py-2 rounded-xl border font-bold cursor-pointer text-xs ${inputThemeClass}`}
+                  >
+                    <option value="copy">Copy (no re-encoding)</option>
+                    <option value="none">None (remove audio)</option>
+                    <option value="aac">AAC</option>
+                    <option value="libmp3lame">MP3</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-slate-400 text-[11px]">Audio Bitrate (kbit/s)</label>
+                  <input
+                    type="text"
+                    value={audioBitrate}
+                    onChange={(e) => setAudioBitrate(e.target.value)}
+                    className={`w-full px-3 py-2 rounded-xl border font-bold text-xs ${inputThemeClass}`}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {isVideo && (
-          <div className={`p-3.5 rounded-2xl border space-y-3 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-            <div className="flex items-center justify-between">
-              <div className="text-xs font-black text-amber-400 flex items-center gap-1.5">
-                <span>✂️</span>
-                <span>{activeLang === 'ar' ? 'القص البصري التفاعلي' : 'Interactive Visual Trimmer'}</span>
+          {isVideo && (
+            <div className={`p-3.5 rounded-2xl border space-y-3 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-black text-amber-400 flex items-center gap-1.5">
+                  <span>✂️</span>
+                  <span>{activeLang === 'ar' ? 'القص البصري التفاعلي' : 'Interactive Visual Trimmer'}</span>
+                </div>
+                {(trimStart || trimEnd) && (
+                  <button
+                    type="button"
+                    onClick={handleApplyTrimCheck}
+                    className="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-[10px] font-bold border border-emerald-500/30"
+                  >
+                    Confirm ✓
+                  </button>
+                )}
               </div>
-              {(trimStart || trimEnd) && (
-                <button
-                  type="button"
-                  onClick={handleApplyTrimCheck}
-                  className="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-[10px] font-bold border border-emerald-500/30"
-                >
-                  Confirm ✓
-                </button>
+
+              {showTrimConfirmation && (
+                <div className="p-1.5 rounded-lg bg-emerald-600 text-white text-[10px] font-bold text-center">
+                  Trim times applied successfully!
+                </div>
               )}
-            </div>
 
-            {showTrimConfirmation && (
-              <div className="p-1.5 rounded-lg bg-emerald-600 text-white text-[10px] font-bold text-center">
-                Trim times applied successfully!
-              </div>
-            )}
+              <div className={`p-2.5 rounded-xl border space-y-2.5 ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
+                <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
+                  <span>Start: <strong className="text-amber-400">{trimStart || formatSecondsToHMS(startSec)}</strong></span>
+                  <span>End: <strong className="text-amber-400">{trimEnd || formatSecondsToHMS(endSec)}</strong></span>
+                </div>
 
-            <div className={`p-2.5 rounded-xl border space-y-2.5 ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
-              <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
-                <span>Start: <strong className="text-amber-400">{trimStart || formatSecondsToHMS(startSec)}</strong></span>
-                <span>End: <strong className="text-amber-400">{trimEnd || formatSecondsToHMS(endSec)}</strong></span>
-              </div>
-
-              <div className="space-y-1.5 pt-0.5">
-                <input
-                  type="range"
-                  min={0}
-                  max={maxDuration}
-                  value={startSec}
-                  onChange={(e) => handleStartSliderChange(Number(e.target.value))}
-                  className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
-                />
-                <input
-                  type="range"
-                  min={0}
-                  max={maxDuration}
-                  value={endSec}
-                  onChange={(e) => handleEndSliderChange(Number(e.target.value))}
-                  className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <label className="text-slate-400 text-[10px]">Start Time</label>
-                <input
-                  type="text"
-                  placeholder="00:00:01"
-                  value={trimStart}
-                  onChange={(e) => {
-                    setTrimStart(e.target.value);
-                    const sec = parseToSeconds(e.target.value);
-                    if (sec > 0) setStartSec(sec);
-                  }}
-                  className={`w-full px-2.5 py-1.5 rounded-xl border font-bold text-xs ${inputThemeClass}`}
-                />
+                <div className="space-y-1.5 pt-0.5">
+                  <input
+                    type="range"
+                    min={0}
+                    max={maxDuration}
+                    value={startSec}
+                    onChange={(e) => handleStartSliderChange(Number(e.target.value))}
+                    className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                  />
+                  <input
+                    type="range"
+                    min={0}
+                    max={maxDuration}
+                    value={endSec}
+                    onChange={(e) => handleEndSliderChange(Number(e.target.value))}
+                    className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-slate-400 text-[10px]">End Time</label>
-                <input
-                  type="text"
-                  placeholder="00:00:05"
-                  value={trimEnd}
-                  onChange={(e) => {
-                    setTrimEnd(e.target.value);
-                    const sec = parseToSeconds(e.target.value);
-                    if (sec > 0) setEndSec(sec);
-                  }}
-                  className={`w-full px-2.5 py-1.5 rounded-xl border font-bold text-xs ${inputThemeClass}`}
-                />
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-slate-400 text-[10px]">Start Time</label>
+                  <input
+                    type="text"
+                    placeholder="00:00:01"
+                    value={trimStart}
+                    onChange={(e) => {
+                      setTrimStart(e.target.value);
+                      const sec = parseToSeconds(e.target.value);
+                      if (sec > 0) setStartSec(sec);
+                    }}
+                    className={`w-full px-2.5 py-1.5 rounded-xl border font-bold text-xs ${inputThemeClass}`}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-slate-400 text-[10px]">End Time</label>
+                  <input
+                    type="text"
+                    placeholder="00:00:05"
+                    value={trimEnd}
+                    onChange={(e) => {
+                      setTrimEnd(e.target.value);
+                      const sec = parseToSeconds(e.target.value);
+                      if (sec > 0) setEndSec(sec);
+                    }}
+                    className={`w-full px-2.5 py-1.5 rounded-xl border font-bold text-xs ${inputThemeClass}`}
+                  />
+                </div>
               </div>
             </div>
+          )}
+        </div>
+
+        <div className={`p-3 border-t flex flex-col sm:flex-row items-center justify-between gap-3 flex-shrink-0 ${isDarkMode ? 'border-slate-800 bg-slate-900/60' : 'border-slate-200 bg-slate-100'}`}>
+          {hasMultipleFiles ? (
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-300">
+              <input
+                type="checkbox"
+                checked={applyToAll}
+                onChange={(e) => setApplyToAll(e.target.checked)}
+                className="w-4 h-4 rounded accent-sky-500 cursor-pointer"
+              />
+              <span>Apply to all files</span>
+            </label>
+          ) : <div />}
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={onClose}
+              className={`flex-1 sm:flex-none px-3.5 py-2 rounded-xl border font-bold text-xs cursor-pointer ${
+                isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-black text-xs shadow-lg shadow-sky-500/30 cursor-pointer"
+            >
+              Apply Options
+            </button>
           </div>
-        )}
-      </div>
-
-      {/* تذييل النافذة */}
-      <div className={`p-3 border-t flex flex-col sm:flex-row items-center justify-between gap-3 flex-shrink-0 ${isDarkMode ? 'border-slate-800 bg-slate-900/60' : 'border-slate-200 bg-slate-100'}`}>
-        {hasMultipleFiles ? (
-          <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-300">
-            <input
-              type="checkbox"
-              checked={applyToAll}
-              onChange={(e) => setApplyToAll(e.target.checked)}
-              className="w-4 h-4 rounded accent-sky-500 cursor-pointer"
-            />
-            <span>Apply to all files</span>
-          </label>
-        ) : <div />}
-
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <button
-            onClick={onClose}
-            className={`flex-1 sm:flex-none px-3.5 py-2 rounded-xl border font-bold text-xs cursor-pointer ${
-              isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-200'
-            }`}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-black text-xs shadow-lg shadow-sky-500/30 cursor-pointer"
-          >
-            Apply Options
-          </button>
         </div>
       </div>
     </div>

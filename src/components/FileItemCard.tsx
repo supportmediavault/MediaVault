@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { QueueItem } from '@/src/core/queueManager';
-import { FileOptionsModal } from '@/src/components/FileOptionsModal';
 
 interface FileItemCardProps {
   item: QueueItem;
@@ -53,10 +52,6 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownCoords, setDropdownCoords] = useState({ top: 0, right: 0 });
 
-  const gearButtonRef = useRef<HTMLButtonElement>(null);
-  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
-  const [optionsCoords, setOptionsCoords] = useState({ top: 0, right: 0, left: 0, openUpward: false });
-
   const handleToggleDropdown = () => {
     if (!isFormatDropdownOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
@@ -66,25 +61,6 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
       });
     }
     setIsFormatDropdownOpen(!isFormatDropdownOpen);
-  };
-
-  // المنطق الذكي: فحص المساحة السفلية، وإذا لم تكفِ يتم فتح الصندوق نحو الأعلى تماماً
-  const handleToggleOptions = () => {
-    if (!isOptionsOpen && gearButtonRef.current) {
-      const rect = gearButtonRef.current.getBoundingClientRect();
-      const modalEstimatedHeight = 500; // الارتفاع التقريبي لصندوق الخيارات
-      const spaceBelow = window.innerHeight - rect.bottom;
-      
-      const openUpward = spaceBelow < modalEstimatedHeight && rect.top > modalEstimatedHeight;
-
-      setOptionsCoords({
-        top: openUpward ? rect.top + window.scrollY - 8 : rect.bottom + window.scrollY + 8,
-        right: window.innerWidth - rect.right - window.scrollX,
-        left: rect.left + window.scrollX,
-        openUpward
-      });
-    }
-    setIsOptionsOpen(!isOptionsOpen);
   };
 
   useEffect(() => {
@@ -161,7 +137,7 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
 
   return (
     <div
-      className={`p-4 rounded-2xl border transition-all duration-300 flex flex-col gap-3 relative overflow-hidden ${
+      className={`p-4 rounded-2xl border transition-all duration-300 flex flex-col gap-3 relative ${
         isDarkMode
           ? 'bg-slate-900 border-slate-700 text-slate-100 shadow-lg'
           : 'bg-white border-slate-200 text-slate-800 shadow-sm'
@@ -449,11 +425,11 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
           </button>
         )}
 
-        {/* زر الترس مع ميزة الفتح الذكي نحو الأعلى إذا لزم الأمر */}
+        {/* زر الترس */}
         <div className="relative inline-block text-left">
           <button
-            ref={gearButtonRef}
-            onClick={handleToggleOptions}
+            type="button"
+            onClick={onOpenOptions}
             className={`p-1.5 rounded-xl border transition-colors cursor-pointer ${
               isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
             }`}
@@ -461,36 +437,6 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
           >
             ⚙️
           </button>
-
-          {isOptionsOpen && typeof window !== 'undefined' && createPortal(
-            <div 
-              style={{ 
-                ...(optionsCoords.openUpward 
-                  ? { bottom: `${window.innerHeight - optionsCoords.top + 8}px` } 
-                  : { top: `${optionsCoords.top}px` }
-                ),
-                maxHeight: '75vh',
-                ...(isRtl ? { left: `${optionsCoords.left}px` } : { right: `${optionsCoords.right}px` })
-              }}
-              className="fixed z-[999999] flex flex-col rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
-            >
-              <div className="relative flex flex-col overflow-y-auto max-h-[75vh]">
-                <FileOptionsModal
-                  isOpen={isOptionsOpen}
-                  onClose={() => setIsOptionsOpen(false)}
-                  item={item}
-                  onSave={(opts, applyAll) => {
-                    if (onUpdateOptions) onUpdateOptions(item.id, opts);
-                    setIsOptionsOpen(false);
-                  }}
-                  isDarkMode={isDarkMode}
-                  isRtl={isRtl}
-                  hasMultipleFiles={hasMultipleFiles}
-                />
-              </div>
-            </div>,
-            document.body
-          )}
         </div>
       </div>
 
@@ -501,7 +447,7 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
               {item.status === 'paused' ? (isRtl ? 'متوقف مؤقتاً' : 'Paused') : `${item.progress}%`}
             </span>
             <span className="text-slate-400">
-              {item.status === 'paused' ? '' : (isRtl ? 'جاري المعالجة والقص...' : 'Processing & Triming...')}
+              {item.status === 'paused' ? '' : (isRtl ? 'جاري المعالجة والقص...' : 'Processing & Trimming...')}
             </span>
           </div>
           <div className={`w-full h-2 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>

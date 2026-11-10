@@ -38,7 +38,6 @@ export default function IMediaApp() {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isZipLoading, setIsZipLoading] = useState<boolean>(false);
 
-  // حالة الصيغة العامة المطبقة على الكل (Global Format Apply)
   const [globalFormat, setGlobalFormat] = useState<string>('webp');
 
   const [sessionStats, setSessionStats] = useState({ convertedCount: 0, totalBytesProcessed: 0 });
@@ -55,7 +54,6 @@ export default function IMediaApp() {
   const [ratingSubmitted, setRatingSubmitted] = useState<boolean>(false);
   const [totalVotes, setTotalVotes] = useState<number>(42);
 
-  // حالة تقسيم الصفحات (Pagination) لعرض 20 عنصر فقط في الشاشة لضمان عدم بطء الواجهة
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 20;
 
@@ -136,7 +134,6 @@ export default function IMediaApp() {
     queueManager.start(activeTab);
   };
 
-  // دالة تطبيق الصيغة على جميع الملفات دفعة واحدة (Apply to All)
   const handleApplyGlobalFormat = (newFormat: string) => {
     setGlobalFormat(newFormat);
     filteredFileList.forEach(item => {
@@ -239,7 +236,6 @@ export default function IMediaApp() {
         t={t}
       />
 
-      {/* إزالة overflow-hidden من الـ main لضمان عدم تأثر تمركز الـ Modals */}
       <main className="max-w-6xl mx-auto px-4 pt-32 pb-28 md:pb-24 w-full flex-grow flex flex-col gap-8">
         
         <WasmChecker isDarkMode={isDarkMode} isRtl={isRtl} />
