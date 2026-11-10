@@ -34,6 +34,7 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
   onResetItem,
   onUpdateFormat,
   onUpdateName,
+  onUpdateOptions,
   onPreview,
   onOpenOptions,
   onExtractAudio,
