@@ -38,8 +38,6 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
   hasMultipleFiles,
   currentLang = 'en'
 }) => {
-  if (!isOpen) return null;
-
   const activeLang = baseTranslations[currentLang] ? currentLang : 'en';
   const t = (key: string) => {
     return baseTranslations[activeLang]?.[key] || baseTranslations['en']?.[key] || key;
@@ -52,14 +50,15 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
   const isVideo = fileType.startsWith('video/') || /\.(mp4|webm|mov|avi|mkv|flv|3gp|m4v|ts|ogv)$/i.test(fileName);
   const isAudio = (!isVideo && !isImage) && (fileType.startsWith('audio/') || /\.(mp3|wav|ogg|aac|m4a|flac|wma|opus)$/i.test(fileName));
 
-  const [videoCodec, setVideoCodec] = useState(item.options?.videoCodec || 'libx264');
-  const [crf, setCrf] = useState<number>(item.options?.crf !== undefined ? item.options.crf : 23);
+  // جميع الـ Hooks هنا بتعريف ثابت ومنتظم بدون أي شروط قبلها
+  const [videoCodec, setVideoCodec] = useState(item?.options?.videoCodec || 'libx264');
+  const [crf, setCrf] = useState<number>(item?.options?.crf !== undefined ? item.options.crf : 23);
   
   const [imageQuality, setImageQuality] = useState<number>(
-    item.options?.quality !== undefined ? Math.round(item.options.quality * 100) : 85
+    item?.options?.quality !== undefined ? Math.round(item.options.quality * 100) : 85
   );
 
-  const initialRes = item.options?.resolution || 'no change';
+  const initialRes = item?.options?.resolution || 'no change';
   const standardResolutions = ['no change', '320x240', '640x480', '854x480', '960x720', '1280x720', '1440x1080', '1920x1080', '2560x1440', '3840x2160'];
   const isCustomRes = initialRes.includes('x') && !standardResolutions.some(res => initialRes.includes(res));
 
@@ -67,8 +66,8 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
   const [customWidth, setCustomWidth] = useState(isCustomRes ? initialRes.split('x')[0] || '1920' : '1920');
   const [customHeight, setCustomHeight] = useState(isCustomRes ? initialRes.split('x')[1] || '1080' : '1080');
 
-  const [audioCodec, setAudioCodec] = useState(item.options?.audioCodec || 'aac');
-  const [audioBitrate, setAudioBitrate] = useState(item.options?.audioBitrate || '128');
+  const [audioCodec, setAudioCodec] = useState(item?.options?.audioCodec || 'aac');
+  const [audioBitrate, setAudioBitrate] = useState(item?.options?.audioBitrate || '128');
   
   const parseToSeconds = (val?: string) => {
     if (!val) return 0;
@@ -80,15 +79,17 @@ export const FileOptionsModal: React.FC<FileOptionsModalProps> = ({
     return 0;
   };
 
-  const [startSec, setStartSec] = useState<number>(parseToSeconds(item.options?.trimStart));
-  const [endSec, setEndSec] = useState<number>(parseToSeconds(item.options?.trimEnd) || 60);
+  const [startSec, setStartSec] = useState<number>(parseToSeconds(item?.options?.trimStart));
+  const [endSec, setEndSec] = useState<number>(parseToSeconds(item?.options?.trimEnd) || 60);
   const [maxDuration, setMaxDuration] = useState<number>(Math.max(100, endSec + 30));
 
-  const [trimStart, setTrimStart] = useState(item.options?.trimStart || '');
-  const [trimEnd, setTrimEnd] = useState(item.options?.trimEnd || '');
+  const [trimStart, setTrimStart] = useState(item?.options?.trimStart || '');
+  const [trimEnd, setTrimEnd] = useState(item?.options?.trimEnd || '');
   
   const [showTrimConfirmation, setShowTrimConfirmation] = useState(false);
   const [applyToAll, setApplyToAll] = useState(false);
+
+  if (!isOpen) return null; // الشرط أصبح هنا بعد تعريف كل الـ Hooks تماماً
 
   const formatSecondsToHMS = (sec: number) => {
     const hrs = Math.floor(sec / 3600).toString().padStart(2, '0');
