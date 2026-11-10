@@ -219,7 +219,7 @@ export default function IMediaApp() {
   return (
     <div
       dir={isRtl ? 'rtl' : 'ltr'}
-      className={`min-h-screen transition-colors duration-300 flex flex-col justify-between font-sans relative overflow-x-hidden ${
+      className={`min-h-screen transition-colors duration-300 flex flex-col justify-between font-sans relative ${
         isDarkMode
           ? 'bg-[#090d16] text-slate-100'
           : 'bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 text-slate-800'
@@ -239,7 +239,7 @@ export default function IMediaApp() {
         t={t}
       />
 
-      {/* رفع الهامش السفلي لـ pb-28 ليناسب الفوتر التفاعلي الثابت أسفل الهاتف */}
+      {/* إزالة overflow-hidden من الـ main لضمان عدم تأثر تمركز الـ Modals */}
       <main className="max-w-6xl mx-auto px-4 pt-32 pb-28 md:pb-24 w-full flex-grow flex flex-col gap-8">
         
         <WasmChecker isDarkMode={isDarkMode} isRtl={isRtl} />
@@ -352,7 +352,6 @@ export default function IMediaApp() {
           {filteredFileList.length > 0 && (
             <div className="space-y-4 pt-2">
               
-              {/* شريط التحكم العام (Global Batch Toolbar) لتطبيق الصيغة على الكل دفعة واحدة */}
               <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-3 ${
                 isDarkMode ? 'bg-slate-950/80 border-slate-800' : 'bg-sky-50/80 border-sky-200'
               }`}>
