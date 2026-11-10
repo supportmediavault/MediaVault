@@ -1,11 +1,22 @@
-const CACHE_NAME = 'imedia-cache-v2';
+const CACHE_NAME = 'imedia-cache-v3';
+const urlsToCache = [
+  '/',
+  '/manifest.json',
+  '/icon.png'
+];
 
-// تثبيت الـ Service Worker
+// تثبيت الـ Service Worker وتخزين الملفات الأساسية
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        return cache.addAll(urlsToCache);
+      })
+      .then(() => self.skipWaiting())
+  );
 });
 
-// تفعيل وتحكم فوري
+// تفعيل وتحكم فوري وتنظيف الكاش القديم
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -20,9 +31,17 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// جلب الملفات
+// جلب الملفات مع الاعتماد على الشبكة أولاً ثم الكاش
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    fetch(event.request)
+      .then((response) => {
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request);
+      })
   );
 });
