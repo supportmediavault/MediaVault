@@ -35,15 +35,12 @@ const nextConfig = {
       layers: true,
     };
 
-    // تجاهل تحذيرات وحدات التفسير الحديثة وتجاوز أخطاء import.meta
     config.module = {
       ...config.module,
       exprContextCritical: false,
     };
 
-    // منع تحايل الـ Webpack على وحدات مكتبات الـ WASM الخارجية
-    config.externals = [...(config.externals || []), { '@imgly/background-removal': '@imgly/background-removal' }];
-
+    // منع Webpack من معالجة حزم WASM والذكاء الاصطناعي كموديولات داخلية وتوجيهها للمتصفح مباشرة
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
