@@ -1,67 +1,39 @@
 /**
- * دالة إزالة الخلفية الاحترافية والآمنة للإنتاج (تتجاوز مشاكل الـ Build تماماً)
+ * دالة إزالة الخلفية المجانية بالذكاء الاصطناعي (مع تحميل ديناميكي آمن تماماً للـ Build)
  */
 export async function removeImageBackground(
   file: File,
   onProgress?: (progress: number) => void,
   lang: string = 'en'
 ): Promise<Blob> {
-  if (onProgress) onProgress(30);
+  try {
+    if (onProgress) onProgress(10);
 
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        if (onProgress) onProgress(60);
+    // التحميل الديناميكي يمنع فشل الـ Build على Vercel تماماً
+    const { removeBackground } = await import('@imgly/background-removal');
 
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error(lang === 'ar' ? 'فشل المعالج' : 'Context failed'));
-          return;
+    if (onProgress) onProgress(30);
+
+    const config = {
+      progress: (key: string, current: number, total: number) => {
+        if (onProgress && total > 0) {
+          const percent = Math.round((current / total) * 70) + 30;
+          onProgress(Math.min(percent, 95));
         }
-
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imgData.data;
-        const width = canvas.width;
-        const height = canvas.height;
-
-        // عينة الزوايا لعزل الخلفية بدقة عالية وأمان تام للـ Build
-        const r0 = data[0], g0 = data[1], b0 = data[2];
-
-        for (let y = 0; y < height; y++) {
-          for (let x = 0; x < width; x++) {
-            const idx = (y * width + x) * 4;
-            const r = data[idx];
-            const g = data[idx + 1];
-            const b = data[idx + 2];
-
-            const diff = Math.abs(r - r0) + Math.abs(g - g0) + Math.abs(b - b0);
-            
-            // إزالة الخلفية المتجانسة بدقة وسرعة فائقة بدون استهلاك ذاكرة المتصفح
-            if (diff < 35 && (x < 15 || x > width - 15 || y < 15 || y > height - 15)) {
-              data[idx + 3] = 0;
-            }
-          }
-        }
-
-        ctx.putImageData(imgData, 0, 0);
-        if (onProgress) onProgress(100);
-
-        canvas.toBlob((blob) => {
-          if (blob) resolve(blob);
-          else reject(new Error(lang === 'ar' ? 'فشل التصدير' : 'Export failed'));
-        }, 'image/png');
-      };
-      img.onerror = () => reject(new Error(lang === 'ar' ? 'خطأ في تحميل الصورة' : 'Image error'));
-      img.src = event.target?.result as string;
+      },
     };
-    reader.onerror = () => reject(new Error(lang === 'ar' ? 'خطأ في قراءة الملف' : 'File error'));
-    reader.readAsDataURL(file);
-  });
+
+    // تنفيذ إزالة الخلفية بذكاء اصطناعي محلياً في متصفح المستخدم
+    const blob = await removeBackground(file, config);
+    
+    if (onProgress) onProgress(100);
+    return blob;
+  } catch (error) {
+    console.error('Background removal error:', error);
+    throw new Error(
+      lang === 'ar' 
+        ? 'فشلت عملية إزالة الخلفية، يرجى المحاولة مرة أخرى.' 
+        : 'Background removal failed, please try again.'
+    );
+  }
 }
