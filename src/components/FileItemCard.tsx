@@ -18,7 +18,6 @@ interface FileItemCardProps {
   onPreview: (url: string, name: string, type: string) => void;
   onOpenOptions: () => void;
   onExtractAudio: () => void;
-  onToggleRemoveBg?: (id: string) => void; // إضافة خيار إزالة الخلفية
   extractedAudioUrl?: string | null;
   formatFileSize: (bytes: number) => string;
   hasMultipleFiles: boolean;
@@ -38,7 +37,6 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
   onPreview,
   onOpenOptions,
   onExtractAudio,
-  onToggleRemoveBg,
   extractedAudioUrl,
   formatFileSize,
   hasMultipleFiles
@@ -139,19 +137,12 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
 
   return (
     <div
-      className={`p-4 rounded-2xl border transition-all duration-300 flex flex-col gap-3 relative overflow-hidden ${
+      className={`p-4 rounded-2xl border transition-all duration-300 flex flex-col gap-3 relative ${
         isDarkMode
           ? 'bg-slate-900 border-slate-700 text-slate-100 shadow-lg'
           : 'bg-white border-slate-200 text-slate-800 shadow-sm'
       }`}
     >
-      {/* أنيميشن المسح بالذكاء الاصطناعي أثناء العمل */}
-      {item.status === 'converting' && item.isRemoveBg && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden z-10 opacity-40">
-          <div className="w-full h-1 bg-gradient-to-r from-transparent via-sky-400 to-transparent animate-pulse" />
-        </div>
-      )}
-
       <div className="flex items-start justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <div
@@ -159,7 +150,7 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
               isDarkMode ? 'bg-sky-500/10 text-sky-400' : 'bg-sky-100 text-sky-600'
             }`}
           >
-            {fileTypeCategory === 'image' ? (item.isRemoveBg ? '✨' : '🖼️') : fileTypeCategory === 'audio' ? '🎵' : '🎬'}
+            {fileTypeCategory === 'image' ? '🖼️' : fileTypeCategory === 'audio' ? '🎵' : '🎬'}
           </div>
 
           <div className="min-w-0 flex-1">
@@ -210,7 +201,7 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
                 </span>
               ) : (
                 <span className="text-sky-500 font-medium">
-                  {item.isRemoveBg ? (isRtl ? '✨ إزالة الخلفية بالذكاء الاصطناعي' : '✨ AI BG Removal') : `Est: ${formatFileSize(getDynamicEstimatedSize())}`}
+                  Est: {formatFileSize(getDynamicEstimatedSize())}
                 </span>
               )}
               {hasTrimActive && (
@@ -249,116 +240,99 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
 
       <div className="flex items-center gap-2 flex-wrap justify-start pt-2 border-t border-slate-700/10">
         
-        {!item.isRemoveBg && (
-          <div className="relative inline-block text-left">
-            <button
-              ref={buttonRef}
-              type="button"
-              onClick={handleToggleDropdown}
-              className={`px-3 py-1.5 rounded-xl border text-xs font-black flex items-center gap-2 transition-all cursor-pointer shadow-sm ${
+        <div className="relative inline-block text-left">
+          <button
+            ref={buttonRef}
+            type="button"
+            onClick={handleToggleDropdown}
+            className={`px-3 py-1.5 rounded-xl border text-xs font-black flex items-center gap-2 transition-all cursor-pointer shadow-sm ${
+              isDarkMode 
+                ? 'bg-slate-800 border-slate-700 text-sky-400 hover:bg-slate-700' 
+                : 'bg-slate-100 border-slate-200 text-sky-700 hover:bg-slate-200'
+            }`}
+          >
+            <span className="uppercase">{item.targetFormat}</span>
+            <span className={`text-[10px] transition-transform duration-200 ${isFormatDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
+          </button>
+
+          {isFormatDropdownOpen && typeof window !== 'undefined' && createPortal(
+            <div 
+              ref={dropdownRef}
+              style={{ top: `${dropdownCoords.top}px`, right: `${dropdownCoords.right}px` }}
+              className={`fixed w-[320px] rounded-2xl shadow-2xl border z-[999999] overflow-hidden backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-150 ${
                 isDarkMode 
-                  ? 'bg-slate-800 border-slate-700 text-sky-400 hover:bg-slate-700' 
-                  : 'bg-slate-100 border-slate-200 text-sky-700 hover:bg-slate-200'
+                  ? 'bg-slate-950/95 border-slate-700 text-white shadow-black/90' 
+                  : 'bg-white/95 border-slate-200 text-slate-800 shadow-2xl'
               }`}
             >
-              <span className="uppercase">{item.targetFormat}</span>
-              <span className={`text-[10px] transition-transform duration-200 ${isFormatDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
-            </button>
+              <div className="p-2.5 border-b border-slate-700/20">
+                <input
+                  type="text"
+                  placeholder={isRtl ? 'بحث عن صيغة...' : 'Search format...'}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`w-full px-3 py-1.5 rounded-xl text-xs font-medium border focus:outline-none ${
+                    isDarkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                  }`}
+                  autoFocus
+                />
+              </div>
 
-            {isFormatDropdownOpen && typeof window !== 'undefined' && createPortal(
-              <div 
-                ref={dropdownRef}
-                style={{ top: `${dropdownCoords.top}px`, right: `${dropdownCoords.right}px` }}
-                className={`fixed w-[320px] rounded-2xl shadow-2xl border z-[999999] overflow-hidden backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-150 ${
-                  isDarkMode 
-                    ? 'bg-slate-950/95 border-slate-700 text-white shadow-black/90' 
-                    : 'bg-white/95 border-slate-200 text-slate-800 shadow-2xl'
-                }`}
-              >
-                <div className="p-2.5 border-b border-slate-700/20">
-                  <input
-                    type="text"
-                    placeholder={isRtl ? 'بحث عن صيغة...' : 'Search format...'}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full px-3 py-1.5 rounded-xl text-xs font-medium border focus:outline-none ${
-                      isDarkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
-                    }`}
-                    autoFocus
-                  />
+              <div className="flex" style={{ height: '210px' }}>
+                <div className={`w-[110px] flex-shrink-0 border-r flex flex-col p-1.5 gap-1 ${
+                  isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-100 bg-slate-50'
+                }`}>
+                  {(['video', 'audio', 'image'] as const).map((cat) => {
+                    const isActive = activeCategory === cat && !searchQuery;
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => { setActiveCategory(cat); setSearchQuery(''); }}
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold text-left flex items-center justify-between transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-sky-500 text-white shadow-sm'
+                            : isDarkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800/60' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                        }`}
+                      >
+                        <span className="capitalize">{cat}</span>
+                        <span className="text-[10px]">›</span>
+                      </button>
+                    );
+                  })}
                 </div>
 
-                <div className="flex" style={{ height: '210px' }}>
-                  <div className={`w-[110px] flex-shrink-0 border-r flex flex-col p-1.5 gap-1 ${
-                    isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-100 bg-slate-50'
-                  }`}>
-                    {(['video', 'audio', 'image'] as const).map((cat) => {
-                      const isActive = activeCategory === cat && !searchQuery;
+                <div className="flex-1 p-2.5 overflow-y-auto">
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {getFilteredFormats().map((fmt) => {
+                      const isSelected = item.targetFormat.toLowerCase() === fmt.toLowerCase();
                       return (
                         <button
-                          key={cat}
+                          key={fmt}
                           type="button"
-                          onClick={() => { setActiveCategory(cat); setSearchQuery(''); }}
-                          className={`w-full px-3 py-2 rounded-xl text-xs font-bold text-left flex items-center justify-between transition-all cursor-pointer ${
-                            isActive
-                              ? 'bg-sky-500 text-white shadow-sm'
-                              : isDarkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800/60' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                          onClick={() => {
+                            onUpdateFormat(item.id, fmt.toLowerCase());
+                            setIsFormatDropdownOpen(false);
+                          }}
+                          className={`py-1.5 px-1 rounded-lg text-[11px] font-black uppercase transition-all cursor-pointer text-center truncate ${
+                            isSelected
+                              ? 'bg-sky-600 text-white shadow-sm scale-105'
+                              : isDarkMode
+                              ? 'bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
+                              : 'bg-slate-100 text-slate-700 hover:bg-sky-50 hover:text-sky-600 border border-slate-200'
                           }`}
                         >
-                          <span className="capitalize">{cat}</span>
-                          <span className="text-[10px]">›</span>
+                          {fmt}
                         </button>
                       );
                     })}
                   </div>
-
-                  <div className="flex-1 p-2.5 overflow-y-auto">
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {getFilteredFormats().map((fmt) => {
-                        const isSelected = item.targetFormat.toLowerCase() === fmt.toLowerCase();
-                        return (
-                          <button
-                            key={fmt}
-                            type="button"
-                            onClick={() => {
-                              onUpdateFormat(item.id, fmt.toLowerCase());
-                              setIsFormatDropdownOpen(false);
-                            }}
-                            className={`py-1.5 px-1 rounded-lg text-[11px] font-black uppercase transition-all cursor-pointer text-center truncate ${
-                              isSelected
-                                ? 'bg-sky-600 text-white shadow-sm scale-105'
-                                : isDarkMode
-                                ? 'bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
-                                : 'bg-slate-100 text-slate-700 hover:bg-sky-50 hover:text-sky-600 border border-slate-200'
-                            }`}
-                          >
-                            {fmt}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
                 </div>
-              </div>,
-              document.body
-            )}
-          </div>
-        )}
-
-        {/* زر إزالة الخلفية البارز */}
-        {fileTypeCategory === 'image' && onToggleRemoveBg && (
-          <button
-            onClick={() => onToggleRemoveBg(item.id)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 border transition-all cursor-pointer ${
-              item.isRemoveBg
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-500 shadow-md shadow-purple-500/20'
-                : isDarkMode ? 'bg-slate-800 border-slate-700 text-purple-400 hover:bg-slate-700' : 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100'
-            }`}
-          >
-            <span>✨</span>
-            <span>{item.isRemoveBg ? (isRtl ? 'إزالة الخلفية مفعلة' : 'AI BG Removal On') : (isRtl ? 'إزالة الخلفية' : 'Remove BG')}</span>
-          </button>
-        )}
+              </div>
+            </div>,
+            document.body
+          )}
+        </div>
 
         {fileTypeCategory === 'video' && (
           <button
@@ -401,38 +375,14 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
               <span>{isRtl ? 'معاينة' : 'Preview'}</span>
             </button>
 
-            {item.isRemoveBg ? (
-              <div className="flex items-center gap-1">
-                <a
-                  href={item.downloadUrl}
-                  download={`${item.customName}_preview.${item.targetFormat}`}
-                  className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1"
-                  title="Download Preview Quality"
-                >
-                  <span>📥</span>
-                  <span>{isRtl ? 'تحميل معاينة (550x)' : 'Preview (550x360)'}</span>
-                </a>
-
-                <a
-                  href={item.downloadUrl}
-                  download={`${item.customName}_HD.${item.targetFormat}`}
-                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1"
-                  title="Download Full Original HD Quality"
-                >
-                  <span>🌟</span>
-                  <span>{isRtl ? 'تحميل الدقة الأصلية' : 'Full HD / Max'}</span>
-                </a>
-              </div>
-            ) : (
-              <a
-                href={item.downloadUrl}
-                download={`${item.customName}.${item.targetFormat}`}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1"
-              >
-                <span>📥</span>
-                <span>{isRtl ? 'تحميل كامل' : 'Download'}</span>
-              </a>
-            )}
+            <a
+              href={item.downloadUrl}
+              download={`${item.customName}.${item.targetFormat}`}
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1"
+            >
+              <span>📥</span>
+              <span>{isRtl ? 'تحميل كامل' : 'Download'}</span>
+            </a>
 
             {hasTrimActive && (
               <a
@@ -475,6 +425,7 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
           </button>
         )}
 
+        {/* زر الترس */}
         <div className="relative inline-block text-left">
           <button
             type="button"
@@ -496,13 +447,13 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
               {item.status === 'paused' ? (isRtl ? 'متوقف مؤقتاً' : 'Paused') : `${item.progress}%`}
             </span>
             <span className="text-slate-400">
-              {item.status === 'paused' ? '' : (item.isRemoveBg ? (isRtl ? '✨ جاري إزالة الخلفية بالذكاء الاصطناعي...' : '✨ AI Removing Background...') : (isRtl ? 'جاري المعالجة والقص...' : 'Processing & Trimming...'))}
+              {item.status === 'paused' ? '' : (isRtl ? 'جاري المعالجة والقص...' : 'Processing & Trimming...')}
             </span>
           </div>
           <div className={`w-full h-2 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
             <div
               className={`h-full transition-all duration-300 ${
-                item.isRemoveBg ? 'bg-gradient-to-r from-purple-500 to-sky-500' : item.status === 'paused' ? 'bg-amber-500' : 'bg-sky-500'
+                item.status === 'paused' ? 'bg-amber-500' : 'bg-sky-500'
               }`}
               style={{ width: `${item.progress}%` }}
             />
@@ -513,7 +464,7 @@ export const FileItemCard: React.FC<FileItemCardProps> = ({
       {item.status === 'completed' && (
         <div className="text-[11px] text-emerald-500 font-bold flex items-center gap-1.5">
           <span>✨</span>
-          <span>{isRtl ? 'اكتملت المعالجة بنجاح' : 'Processed Successfully'}</span>
+          <span>{isRtl ? 'اكتملت المعالجة والقص بنجاح' : 'Processed and Trimmed Successfully'}</span>
         </div>
       )}
 

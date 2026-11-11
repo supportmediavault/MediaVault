@@ -5,7 +5,6 @@ export interface QueueItem {
   file: File;
   customName: string;
   targetFormat: string;
-  isRemoveBg?: boolean; // الميزة الجديدة
   options: {
     resolution: string;
     compressionLevel: string;
@@ -41,17 +40,15 @@ export class ConversionQueueManager {
   private convertVideoFn?: any;
   private convertAudioFn?: any;
   private convertImageFn?: any;
-  private removeBgFn?: any; // إضافة دالة إزالة الخلفية
 
   constructor(concurrency: number = 100) {
     this.concurrencyLimit = concurrency;
   }
 
-  public setConverters(videoFn: any, audioFn: any, imageFn: any, removeBgFn?: any) {
+  public setConverters(videoFn: any, audioFn: any, imageFn: any) {
     this.convertVideoFn = videoFn;
     this.convertAudioFn = audioFn;
     this.convertImageFn = imageFn;
-    this.removeBgFn = removeBgFn;
   }
 
   public subscribe(listener: QueueListener) {
@@ -72,7 +69,7 @@ export class ConversionQueueManager {
     }
   }
 
-  public addFiles(files: File[], defaultTabType: string = 'video', defaultFormat: string = 'mp4', isRemoveBg: boolean = false) {
+  public addFiles(files: File[], defaultTabType: string = 'video', defaultFormat: string = 'mp4') {
     const newItems: QueueItem[] = files.map(f => {
       const lastDot = f.name.lastIndexOf('.');
       const nameOnly = lastDot !== -1 ? f.name.substring(0, lastDot) : f.name;
@@ -80,8 +77,7 @@ export class ConversionQueueManager {
         id: Math.random().toString(36).substring(2, 9),
         file: f,
         customName: nameOnly,
-        targetFormat: isRemoveBg ? 'png' : defaultFormat,
-        isRemoveBg: isRemoveBg,
+        targetFormat: defaultFormat,
         options: {
           resolution: 'original',
           compressionLevel: 'medium',
@@ -213,48 +209,41 @@ export class ConversionQueueManager {
       let resultBlob: Blob;
       if (controller.signal.aborted) throw { message: 'Paused' };
 
-      if (target.isRemoveBg && this.removeBgFn) {
-        resultBlob = await this.removeBgFn(target.file, (p: number) => {
-          if (controller.signal.aborted) return;
-          this.updateProgress(target.id, p);
-        });
-      } else {
-        const fileType = target.file.type;
-        const isVid = fileType.startsWith('video/') || ['mp4', 'webm', 'mov', 'avi', 'mkv', 'flv', '3gp', 'm4v', 'ts'].includes(target.targetFormat.toLowerCase());
-        const isAud = fileType.startsWith('audio/') || ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac'].includes(target.targetFormat.toLowerCase());
-        const isImg = fileType.startsWith('image/') || ['webp', 'png', 'jpeg', 'jpg', 'avif', 'gif', 'bmp', 'ico'].includes(target.targetFormat.toLowerCase());
+      const fileType = target.file.type;
+      const isVid = fileType.startsWith('video/') || ['mp4', 'webm', 'mov', 'avi', 'mkv', 'flv', '3gp', 'm4v', 'ts'].includes(target.targetFormat.toLowerCase());
+      const isAud = fileType.startsWith('audio/') || ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac'].includes(target.targetFormat.toLowerCase());
+      const isImg = fileType.startsWith('image/') || ['webp', 'png', 'jpeg', 'jpg', 'avif', 'gif', 'bmp', 'ico'].includes(target.targetFormat.toLowerCase());
 
-        if (isVid && this.convertVideoFn) {
-          const quality = target.options.compressionLevel === 'high' ? 0.70 : target.options.compressionLevel === 'low' ? 0.95 : 0.85;
-          const crf = target.options.crf !== undefined ? target.options.crf : (target.options.compressionLevel === 'high' ? 28 : target.options.compressionLevel === 'low' ? 18 : 23);
-          const res = await this.convertVideoFn(
-            target.file, target.targetFormat, { 
-              resolution: target.options.resolution, 
-              crf, 
-              quality,
-              videoCodec: target.options.videoCodec,
-              audioCodec: target.options.audioCodec,
-              audioBitrate: target.options.audioBitrate,
-              trimStart: target.options.trimStart,
-              trimEnd: target.options.trimEnd
-            },
-            (p: number) => {
-              if (controller.signal.aborted) return;
-              this.updateProgress(target.id, p);
-            },
-            controller.signal, target.lastTime || 0, target.existingChunks || []
-          );
-          resultBlob = res.blob;
-        } else if (isAud && this.convertAudioFn) {
-          resultBlob = await this.convertAudioFn(target.file, target.targetFormat, (p: number) => {
+      if (isVid && this.convertVideoFn) {
+        const quality = target.options.compressionLevel === 'high' ? 0.70 : target.options.compressionLevel === 'low' ? 0.95 : 0.85;
+        const crf = target.options.crf !== undefined ? target.options.crf : (target.options.compressionLevel === 'high' ? 28 : target.options.compressionLevel === 'low' ? 18 : 23);
+        const res = await this.convertVideoFn(
+          target.file, target.targetFormat, { 
+            resolution: target.options.resolution, 
+            crf, 
+            quality,
+            videoCodec: target.options.videoCodec,
+            audioCodec: target.options.audioCodec,
+            audioBitrate: target.options.audioBitrate,
+            trimStart: target.options.trimStart,
+            trimEnd: target.options.trimEnd
+          },
+          (p: number) => {
             if (controller.signal.aborted) return;
             this.updateProgress(target.id, p);
-          }, controller.signal);
-        } else if (isImg && this.convertImageFn) {
-          resultBlob = await this.convertImageFn(target.file, target.targetFormat, target.options.quality || 0.85);
-        } else {
-          throw new Error('Converter not found for this format');
-        }
+          },
+          controller.signal, target.lastTime || 0, target.existingChunks || []
+        );
+        resultBlob = res.blob;
+      } else if (isAud && this.convertAudioFn) {
+        resultBlob = await this.convertAudioFn(target.file, target.targetFormat, (p: number) => {
+          if (controller.signal.aborted) return;
+          this.updateProgress(target.id, p);
+        }, controller.signal);
+      } else if (isImg && this.convertImageFn) {
+        resultBlob = await this.convertImageFn(target.file, target.targetFormat, target.options.quality || 0.85);
+      } else {
+        throw new Error('Converter not found for this format');
       }
 
       if (controller.signal.aborted) throw { message: 'Paused' };
@@ -350,48 +339,41 @@ export class ConversionQueueManager {
           let resultBlob: Blob;
           if (controller.signal.aborted) throw { message: 'Paused' };
 
-          if (target.isRemoveBg && this.removeBgFn) {
-            resultBlob = await this.removeBgFn(target.file, (p: number) => {
-              if (controller.signal.aborted) return;
-              this.updateProgress(target.id, p);
-            });
-          } else {
-            const fileType = target.file.type;
-            const isVid = fileType.startsWith('video/') || ['mp4', 'webm', 'mov', 'avi', 'mkv', 'flv', '3gp', 'm4v', 'ts'].includes(target.targetFormat.toLowerCase());
-            const isAud = fileType.startsWith('audio/') || ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac'].includes(target.targetFormat.toLowerCase());
-            const isImg = fileType.startsWith('image/') || ['webp', 'png', 'jpeg', 'jpg', 'avif', 'gif', 'bmp', 'ico'].includes(target.targetFormat.toLowerCase());
+          const fileType = target.file.type;
+          const isVid = fileType.startsWith('video/') || ['mp4', 'webm', 'mov', 'avi', 'mkv', 'flv', '3gp', 'm4v', 'ts'].includes(target.targetFormat.toLowerCase());
+          const isAud = fileType.startsWith('audio/') || ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac'].includes(target.targetFormat.toLowerCase());
+          const isImg = fileType.startsWith('image/') || ['webp', 'png', 'jpeg', 'jpg', 'avif', 'gif', 'bmp', 'ico'].includes(target.targetFormat.toLowerCase());
 
-            if (isVid && this.convertVideoFn) {
-              const quality = target.options.compressionLevel === 'high' ? 0.70 : target.options.compressionLevel === 'low' ? 0.95 : 0.85;
-              const crf = target.options.crf !== undefined ? target.options.crf : (target.options.compressionLevel === 'high' ? 28 : target.options.compressionLevel === 'low' ? 18 : 23);
-              const res = await this.convertVideoFn(
-                target.file, target.targetFormat, { 
-                  resolution: target.options.resolution, 
-                  crf, 
-                  quality,
-                  videoCodec: target.options.videoCodec,
-                  audioCodec: target.options.audioCodec,
-                  audioBitrate: target.options.audioBitrate,
-                  trimStart: target.options.trimStart,
-                  trimEnd: target.options.trimEnd
-                },
-                (p: number) => {
-                  if (controller.signal.aborted) return;
-                  this.updateProgress(target.id, p);
-                },
-                controller.signal, target.lastTime || 0, target.existingChunks || []
-              );
-              resultBlob = res.blob;
-            } else if (isAud && this.convertAudioFn) {
-              resultBlob = await this.convertAudioFn(target.file, target.targetFormat, (p: number) => {
+          if (isVid && this.convertVideoFn) {
+            const quality = target.options.compressionLevel === 'high' ? 0.70 : target.options.compressionLevel === 'low' ? 0.95 : 0.85;
+            const crf = target.options.crf !== undefined ? target.options.crf : (target.options.compressionLevel === 'high' ? 28 : target.options.compressionLevel === 'low' ? 18 : 23);
+            const res = await this.convertVideoFn(
+              target.file, target.targetFormat, { 
+                resolution: target.options.resolution, 
+                crf, 
+                quality,
+                videoCodec: target.options.videoCodec,
+                audioCodec: target.options.audioCodec,
+                audioBitrate: target.options.audioBitrate,
+                trimStart: target.options.trimStart,
+                trimEnd: target.options.trimEnd
+              },
+              (p: number) => {
                 if (controller.signal.aborted) return;
                 this.updateProgress(target.id, p);
-              }, controller.signal);
-            } else if (isImg && this.convertImageFn) {
-              resultBlob = await this.convertImageFn(target.file, target.targetFormat, target.options.quality || 0.85);
-            } else {
-              throw new Error('Converter not found for this format');
-            }
+              },
+              controller.signal, target.lastTime || 0, target.existingChunks || []
+            );
+            resultBlob = res.blob;
+          } else if (isAud && this.convertAudioFn) {
+            resultBlob = await this.convertAudioFn(target.file, target.targetFormat, (p: number) => {
+              if (controller.signal.aborted) return;
+              this.updateProgress(target.id, p);
+            }, controller.signal);
+          } else if (isImg && this.convertImageFn) {
+            resultBlob = await this.convertImageFn(target.file, target.targetFormat, target.options.quality || 0.85);
+          } else {
+            throw new Error('Converter not found for this format');
           }
 
           if (controller.signal.aborted) throw { message: 'Paused' };

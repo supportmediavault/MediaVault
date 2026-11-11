@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // تعطيل ملفات الخريطة في الإنتاج لحماية الكود من إعادة الهندسة والنسخ
   productionBrowserSourceMaps: false,
 
+  // تمكين الترويسات المطلوبة لعمل FFmpeg WASM وأداء (SharedArrayBuffer) وحماية الموقع
   async headers() {
     return [
       {
@@ -17,11 +19,11 @@ const nextConfig = {
           },
           {
             key: 'X-Frame-Options',
-            value: 'DENY',
+            value: 'DENY', // يمنع عرض موقعك داخل إطار في مواقع أخرى (حماية من Clickjacking)
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff',
+            value: 'nosniff', // يمنع المتصفح من تخمين أنواع الملفات حمايةً من الثغرات
           },
         ],
       },
@@ -29,18 +31,14 @@ const nextConfig = {
   },
 
   webpack: (config, { isServer }) => {
+    // دعم ملفات WebAssembly
     config.experiments = {
       ...config.experiments,
       asyncWebAssembly: true,
       layers: true,
     };
 
-    config.module = {
-      ...config.module,
-      exprContextCritical: false,
-    };
-
-    // منع Webpack من معالجة حزم WASM والذكاء الاصطناعي كموديولات داخلية وتوجيهها للمتصفح مباشرة
+    // منع أخطاء وحدات Node.js داخل متصفح المستخدم
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
