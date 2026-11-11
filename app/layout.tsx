@@ -41,29 +41,6 @@ export default function RootLayout({
       <body>
         {children}
         <Analytics />
-        
-        {/* سكريبت تسجيل ومراقبة تحديثات الـ Service Worker تلقائياً */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                  navigator.serviceWorker.register('/sw.js').then((registration) => {
-                    registration.update();
-                  });
-
-                  let refreshing = false;
-                  navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (!refreshing) {
-                      refreshing = true;
-                      window.location.reload();
-                    }
-                  });
-                });
-              }
-            `,
-          }}
-        />
       </body>
     </html>
   );

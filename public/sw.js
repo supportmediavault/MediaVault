@@ -1,47 +1,56 @@
-const CACHE_NAME = 'imedia-cache-v3';
-const urlsToCache = [
+const CACHE_NAME = 'imedia-offline-v1';
+const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',
-  '/icon.png'
+  '/favicon.ico',
+  // ملاحظة: مكتبات الـ WebAssembly (مثل FFmpeg) سيتم تحميلها مؤقتاً تلقائياً عند أول اتصال ناجح
 ];
 
-// تثبيت الـ Service Worker وتخزين الملفات الأساسية
+// تثبيت عامل الخدمة وتخزين الملفات الأساسية
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        return cache.addAll(urlsToCache);
-      })
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
   );
+  self.skipWaiting();
 });
 
-// تفعيل وتحكم فوري وتنظيف الكاش القديم
+// تفعيل عامل الخدمة وتنظيف التخزين المؤقت القديم
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then((keys) => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
       );
-    }).then(() => self.clients.claim())
+    })
   );
+  self.claim();
 });
 
-// جلب الملفات مع الاعتماد على الشبكة أولاً ثم الكاش
+// الاعتراض على الطلبات لخدمة المستخدم حتى لو انقطع الإنترنت
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  
+
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        return response;
-      })
-      .catch(() => {
-        return caches.match(event.request);
-      })
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(event.request)
+        .then((response) => {
+          if (!response || response.status !== 200 || response.type !== 'basic') {
+            return response;
+          }
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+          return response;
+        })
+        .catch(() => {
+          return caches.match('/');
+        });
+    })
   );
 });

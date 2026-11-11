@@ -6,6 +6,7 @@ import { convertImage } from '@/src/core/converters/imageConverter';
 import { convertAudio } from '@/src/core/converters/audioConverter';
 import { convertVideo } from '@/src/core/converters/videoConverter';
 import { extractAudioFromVideo } from '@/src/core/converters/audioExtractor';
+import { removeImageBackground } from '@/src/core/converters/bgRemovalConverter';
 import { baseTranslations } from '@/src/core/i18n/translator';
 
 import { Header } from '@/src/components/Header';
@@ -20,7 +21,7 @@ import { PreviewModal } from '@/src/components/PreviewModal';
 import { FileItemCard } from '@/src/components/FileItemCard';
 import { FileOptionsModal } from '@/src/components/FileOptionsModal';
 
-type TabType = 'image' | 'audio' | 'video';
+type TabType = 'image' | 'audio' | 'video' | 'remove-bg';
 
 export default function IMediaApp() {
   const [lang, setLang] = useState<string>('en');
@@ -84,7 +85,7 @@ export default function IMediaApp() {
   };
 
   useEffect(() => {
-    queueManager.setConverters(convertVideo, convertAudio, convertImage);
+    queueManager.setConverters(convertVideo, convertAudio, convertImage, removeImageBackground);
     const unsubscribe = queueManager.subscribe((items, globalPaused) => {
       const prevCompleted = fileList.filter(i => i.status === 'completed').length;
       const newCompleted = items.filter(i => i.status === 'completed').length;
@@ -117,6 +118,17 @@ export default function IMediaApp() {
     const firstFile = fileArray[0];
     let detectedTab: TabType = 'video';
     
+    const fileName = firstFile.name.toLowerCase();
+    const isSupportedForBg = /\.(jpg|jpeg|png|webp)$/i.test(fileName) || ['image/jpeg', 'image/png', 'image/webp'].includes(firstFile.type);
+
+    if (activeTab === 'remove-bg') {
+      if (!isSupportedForBg) {
+        setTypeError(isRtl ? '⚠️ تنبيه: الصيغ المدعومة مباشرة لإزالة الخلفية هي JPG, PNG, WebP. تم رفع الملف للتحويل أولاً.' : 'Only JPG, PNG and WebP images are supported for direct BG removal. File uploaded for conversion.');
+      }
+      queueManager.addFiles(fileArray, 'remove-bg', 'png', true);
+      return;
+    }
+
     if (firstFile.type.startsWith('image/') || /\.(webp|png|jpeg|jpg|avif|gif|bmp|ico)$/i.test(firstFile.name)) {
       detectedTab = 'image';
     } else if (firstFile.type.startsWith('audio/') || /\.(mp3|wav|ogg|aac|m4a|flac)$/i.test(firstFile.name)) {
@@ -127,11 +139,25 @@ export default function IMediaApp() {
 
     setActiveTab(detectedTab);
     const defaultFmt = detectedTab === 'image' ? 'webp' : detectedTab === 'audio' ? 'mp3' : 'mp4';
-    queueManager.addFiles(fileArray, detectedTab, defaultFmt);
+    queueManager.addFiles(fileArray, detectedTab, defaultFmt, false);
   };
 
   const startConversion = () => {
     queueManager.start(activeTab);
+  };
+
+  const handleToggleRemoveBg = (id: string) => {
+    setFileList(prev => prev.map(item => {
+      if (item.id === id) {
+        const nextState = !item.isRemoveBg;
+        return {
+          ...item,
+          isRemoveBg: nextState,
+          targetFormat: nextState ? 'png' : 'webp'
+        };
+      }
+      return item;
+    }));
   };
 
   const handleApplyGlobalFormat = (newFormat: string) => {
@@ -150,7 +176,8 @@ export default function IMediaApp() {
     const isAud = fileType.startsWith('audio/') || /\.(mp3|wav|ogg|aac|m4a|flac)$/i.test(item.file.name);
     const isVid = fileType.startsWith('video/') || /\.(mp4|webm|mov|avi|mkv|flv|3gp|m4v|ts)$/i.test(item.file.name);
 
-    if (activeTab === 'image') return isImg;
+    if (activeTab === 'remove-bg') return isImg && item.isRemoveBg;
+    if (activeTab === 'image') return isImg && !item.isRemoveBg;
     if (activeTab === 'audio') return isAud;
     if (activeTab === 'video') return isVid;
     return true;
@@ -270,9 +297,11 @@ export default function IMediaApp() {
               : 'bg-white/95 border-sky-100 text-slate-800 shadow-sky-100/50'
           }`}
         >
-          <div className={`grid grid-cols-3 p-1.5 rounded-2xl border ${isDarkMode ? 'bg-slate-950/65 border-slate-700' : 'bg-slate-100/90 border-slate-200'}`}>
+          {/* التبويبات الأربعة (Images, Remove BG, Audio, Video) */}
+          <div className={`grid grid-cols-2 md:grid-cols-4 p-1.5 rounded-2xl border gap-1 ${isDarkMode ? 'bg-slate-950/65 border-slate-700' : 'bg-slate-100/90 border-slate-200'}`}>
             {[
               { id: 'image', label: t.tabs?.image || 'Images', icon: '🖼️' },
+              { id: 'remove-bg', label: isRtl ? 'إزالة الخلفية' : 'Remove BG', icon: '✨' },
               { id: 'audio', label: t.tabs?.audio || 'Audio', icon: '🎵' },
               { id: 'video', label: t.tabs?.video || 'Video', icon: '🎬' },
             ].map((tab) => {
@@ -281,12 +310,14 @@ export default function IMediaApp() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as TabType)}
-                  className={`group relative py-3 rounded-xl text-xs md:text-sm font-bold flex items-center justify-center gap-2.5 transition-all duration-300 ease-out cursor-pointer ${
+                  className={`group relative py-3 rounded-xl text-xs md:text-sm font-bold flex items-center justify-center gap-2 transition-all duration-300 ease-out cursor-pointer ${
                     isActive
-                      ? 'bg-sky-500 text-white shadow-xl shadow-sky-500/40 scale-[1.04] font-black z-10'
+                      ? tab.id === 'remove-bg'
+                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-xl shadow-purple-500/40 scale-[1.04] font-black z-10'
+                        : 'bg-sky-500 text-white shadow-xl shadow-sky-500/40 scale-[1.04] font-black z-10'
                       : isDarkMode 
-                      ? 'text-slate-400 hover:text-white hover:bg-slate-800/90 hover:-translate-y-1.5 hover:scale-[1.08] hover:shadow-xl hover:shadow-black/50 hover:z-20' 
-                      : 'text-slate-500 hover:text-slate-900 hover:bg-white hover:-translate-y-1.5 hover:scale-[1.08] hover:shadow-xl hover:shadow-sky-500/15 hover:z-20'
+                      ? 'text-slate-400 hover:text-white hover:bg-slate-800/90 hover:-translate-y-1 hover:scale-[1.05]' 
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-white hover:-translate-y-1 hover:scale-[1.05]'
                   }`}
                 >
                   <span className="transition-transform duration-300 group-hover:scale-125 group-hover:rotate-6">
@@ -299,7 +330,7 @@ export default function IMediaApp() {
           </div>
 
           {typeError && (
-            <div className="bg-rose-500/15 border border-rose-500/30 text-rose-500 p-3 rounded-xl text-xs font-bold text-center">
+            <div className="bg-amber-500/15 border border-amber-500/30 text-amber-500 p-3 rounded-xl text-xs font-bold text-center">
               {typeError}
             </div>
           )}
@@ -337,76 +368,82 @@ export default function IMediaApp() {
             }`}
           >
             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-sm ${isDarkMode ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' : 'bg-sky-100 text-sky-600'}`}>
-              📁
+              {activeTab === 'remove-bg' ? '✨' : '📁'}
             </div>
             <div className="space-y-1">
-              <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{t.dropzoneTitle}</p>
-              <p className="text-xs text-slate-400">{t.dropzoneSubtitle}</p>
+              <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                {activeTab === 'remove-bg' ? (isRtl ? 'اسحب الصور لإزالة خلفيتها هنا، أو انقر للاختيار' : 'Drop images here to remove background, or click to browse') : t.dropzoneTitle}
+              </p>
+              <p className="text-xs text-slate-400">
+                {activeTab === 'remove-bg' ? (isRtl ? 'تدعم صيغ JPG, PNG, WebP بالذكاء الاصطناعي محلياً' : 'Supports JPG, PNG, WebP locally via AI') : t.dropzoneSubtitle}
+              </p>
             </div>
           </div>
 
           {filteredFileList.length > 0 && (
             <div className="space-y-4 pt-2">
               
-              <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-3 ${
-                isDarkMode ? 'bg-slate-950/80 border-slate-800' : 'bg-sky-50/80 border-sky-200'
-              }`}>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">⚡</span>
-                  <span className="text-xs font-black">
-                    {isRtl ? `تطبيق الصيغة على الكل (${filteredFileList.length} ملف):` : `Apply Format to All (${filteredFileList.length} files):`}
-                  </span>
-                </div>
+              {activeTab !== 'remove-bg' && (
+                <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-3 ${
+                  isDarkMode ? 'bg-slate-950/80 border-slate-800' : 'bg-sky-50/80 border-sky-200'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">⚡</span>
+                    <span className="text-xs font-black">
+                      {isRtl ? `تطبيق الصيغة على الكل (${filteredFileList.length} ملف):` : `Apply Format to All (${filteredFileList.length} files):`}
+                    </span>
+                  </div>
 
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <select
-                    value={globalFormat}
-                    onChange={(e) => handleApplyGlobalFormat(e.target.value)}
-                    className={`px-3 py-2 rounded-xl border text-xs font-black cursor-pointer ${
-                      isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-                    }`}
-                  >
-                    {activeTab === 'image' && (
-                      <>
-                        <option value="webp">WEBP</option>
-                        <option value="png">PNG</option>
-                        <option value="jpeg">JPEG</option>
-                        <option value="jpg">JPG</option>
-                        <option value="avif">AVIF</option>
-                        <option value="gif">GIF</option>
-                        <option value="bmp">BMP</option>
-                        <option value="ico">ICO</option>
-                      </>
-                    )}
-                    {activeTab === 'audio' && (
-                      <>
-                        <option value="mp3">MP3</option>
-                        <option value="wav">WAV</option>
-                        <option value="ogg">OGG</option>
-                        <option value="aac">AAC</option>
-                        <option value="m4a">M4A</option>
-                        <option value="flac">FLAC</option>
-                      </>
-                    )}
-                    {activeTab === 'video' && (
-                      <>
-                        <option value="mp4">MP4</option>
-                        <option value="webm">WEBM</option>
-                        <option value="mov">MOV</option>
-                        <option value="avi">AVI</option>
-                        <option value="mkv">MKV</option>
-                      </>
-                    )}
-                  </select>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <select
+                      value={globalFormat}
+                      onChange={(e) => handleApplyGlobalFormat(e.target.value)}
+                      className={`px-3 py-2 rounded-xl border text-xs font-black cursor-pointer ${
+                        isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      }`}
+                    >
+                      {activeTab === 'image' && (
+                        <>
+                          <option value="webp">WEBP</option>
+                          <option value="png">PNG</option>
+                          <option value="jpeg">JPEG</option>
+                          <option value="jpg">JPG</option>
+                          <option value="avif">AVIF</option>
+                          <option value="gif">GIF</option>
+                          <option value="bmp">BMP</option>
+                          <option value="ico">ICO</option>
+                        </>
+                      )}
+                      {activeTab === 'audio' && (
+                        <>
+                          <option value="mp3">MP3</option>
+                          <option value="wav">WAV</option>
+                          <option value="ogg">OGG</option>
+                          <option value="aac">AAC</option>
+                          <option value="m4a">M4A</option>
+                          <option value="flac">FLAC</option>
+                        </>
+                      )}
+                      {activeTab === 'video' && (
+                        <>
+                          <option value="mp4">MP4</option>
+                          <option value="webm">WEBM</option>
+                          <option value="mov">MOV</option>
+                          <option value="avi">AVI</option>
+                          <option value="mkv">MKV</option>
+                        </>
+                      )}
+                    </select>
 
-                  <button
-                    onClick={() => handleApplyGlobalFormat(globalFormat)}
-                    className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-black transition-all shadow-md cursor-pointer"
-                  >
-                    {isRtl ? 'تطبيق على الكل' : 'Apply to All'}
-                  </button>
+                    <button
+                      onClick={() => handleApplyGlobalFormat(globalFormat)}
+                      className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-black transition-all shadow-md cursor-pointer"
+                    >
+                      {isRtl ? 'تطبيق على الكل' : 'Apply to All'}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="flex items-center justify-between px-1">
                 <span className="text-xs font-bold text-slate-400">{t.selectedFiles} ({filteredFileList.length}):</span>
@@ -450,6 +487,7 @@ export default function IMediaApp() {
                     onUpdateName={(id, name) => queueManager.updateFileName(id, name)}
                     onPreview={(url, name, type) => setPreviewItem({ url, name, type: type as any })}
                     onOpenOptions={() => setActiveOptionsItem(item)}
+                    onToggleRemoveBg={handleToggleRemoveBg}
                     extractedAudioUrl={extractedAudioUrls[item.id] || null}
                     onExtractAudio={async () => {
                       try {
@@ -543,9 +581,13 @@ export default function IMediaApp() {
           <button
             onClick={startConversion}
             disabled={filteredFileList.length === 0 || isProcessing}
-            className="w-full py-3.5 px-6 rounded-2xl font-black text-sm transition-all shadow-xl flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white shadow-sky-500/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className={`w-full py-3.5 px-6 rounded-2xl font-black text-sm transition-all shadow-xl flex items-center justify-center gap-2 text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
+              activeTab === 'remove-bg'
+                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 shadow-purple-500/20'
+                : 'bg-sky-500 hover:bg-sky-600 shadow-sky-500/20'
+            }`}
           >
-            <span>{isProcessing ? t.converting : `${t.convertBtn} (${filteredFileList.length})`}</span>
+            <span>{isProcessing ? t.converting : (activeTab === 'remove-bg' ? `✨ Start AI Background Removal (${filteredFileList.length})` : `${t.convertBtn} (${filteredFileList.length})`)}</span>
           </button>
         </div>
 
