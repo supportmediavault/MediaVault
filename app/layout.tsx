@@ -71,4 +71,3 @@ export default function RootLayout({
     </html>
   );
 }
-```[cite: 13]
