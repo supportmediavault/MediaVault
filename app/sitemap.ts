@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://imedia.app';
+  const baseUrl = 'https://imedia-live.vercel.app';
 
   return [
     {
